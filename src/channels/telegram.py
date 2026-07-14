@@ -508,7 +508,7 @@ class TelegramBot:
                 payment_url = payment_result.get("payment_url")
                 
                 upgrade_text = f"""
-💳 **הגיע הזמן לפרימיום!**
+💳 **VocalizeBot - הגיע הזמן לפרימיום!**
 
 לחץ על הקישור לתשלום מאובטח:
 {payment_url}
@@ -536,7 +536,7 @@ class TelegramBot:
         amount = int(premium_price.get("amount", 29.90))
         
         upgrade_text = f"""
-💳 **הגיע הזמן לפרימיום!**
+💳 **VocalizeBot - הגיע הזמן לפרימיום!**
 
 📌 **לתשלום:**
 1. לחץ על הקישור: https://paypal.me/talhatil/{amount}
@@ -576,7 +576,9 @@ class TelegramBot:
             status_text = "❌ שגיאה בזיהוי"
         
         welcome_text = f"""
-🤖 *ברוך הבא לבוט התמלול!*
+🤖 *ברוך הבא ל-VocalizeBot!*
+
+*VocalizeBot — תמלול קולי חכם*
 
 אני יכול לתמלל הודעות קוליות מ-Telegram בעזרת Google AI Studio.
 
@@ -869,7 +871,7 @@ class TelegramBot:
         return """
 🔔 **נותרו לך 0 תמלולים חינם!**
 
-הגיע הזמן לשדרג לפרימיום:
+**VocalizeBot - הגיע הזמן לשדרג לפרימיום:**
 • תמלולים ללא הגבלה
 • גישה מהירה
 • עדיפות בתמיכה
@@ -881,7 +883,7 @@ class TelegramBot:
         return {
             "amount": 29.90,  # USD
             "currency": "USD",
-            "description": "Premium Subscription"
+            "description": "VocalizeBot Premium - Unlimited Transcriptions"
         }
 
     def _get_user_language(self, user_id: int) -> str:

@@ -1,5 +1,5 @@
 """
-ReplyQ AI Agent - Main Application Entry Point
+VocalizeBot - Main Application Entry Point
 Open Hands Agent | Tal HaTil Empire
 """
 import asyncio
@@ -25,7 +25,7 @@ settings = get_settings()
 async def lifespan(app: FastAPI):
     """Application lifespan handler."""
     # Startup
-    logger.info("Starting ReplyQ AI Agent...")
+    logger.info("Starting VocalizeBot...")
     
     # Initialize database
     await init_db()
@@ -39,14 +39,14 @@ async def lifespan(app: FastAPI):
     yield
     
     # Shutdown
-    logger.info("Shutting down ReplyQ AI Agent...")
+    logger.info("Shutting down VocalizeBot...")
     await close_db()
     logger.info("Database connections closed")
 
 
 # Create FastAPI app
 app = FastAPI(
-    title="ReplyQ AI Agent",
+    title="VocalizeBot",
     description="Advanced AI Agent for Customer Management, Sales & Business Operations on WhatsApp and Instagram",
     version="1.0.0",
     lifespan=lifespan
@@ -71,7 +71,7 @@ app.include_router(instagram_router)
 async def root():
     """Root endpoint."""
     return {
-        "name": "ReplyQ AI Agent",
+        "name": "VocalizeBot",
         "version": "1.0.0",
         "status": "running",
         "description": "Advanced AI Agent for Customer Management, Sales & Business Operations"
@@ -441,7 +441,7 @@ def configure_logging():
         level=settings.log_level
     )
     logger.add(
-        "logs/replyq_{time}.log",
+        "logs/vocalizebot_{time}.log",
         rotation="1 day",
         retention="7 days",
         level="INFO"

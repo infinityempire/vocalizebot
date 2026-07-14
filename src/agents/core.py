@@ -1,5 +1,5 @@
 """
-ReplyQ AI Agent - Core AI Agent Implementation
+VocalizeBot - Core AI Agent Implementation
 """
 import json
 import re
@@ -26,7 +26,7 @@ settings = get_settings()
 
 
 class AIAgent:
-    """Main AI Agent for ReplyQ."""
+    """Main AI Agent for VocalizeBot."""
 
     def __init__(self):
         self.settings = settings

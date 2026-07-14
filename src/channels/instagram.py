@@ -1,5 +1,5 @@
 """
-ReplyQ AI Agent - Instagram Channel Integration
+VocalizeBot - Instagram Channel Integration
 """
 import hashlib
 import hmac

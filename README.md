@@ -1,4 +1,4 @@
-# ReplyQ AI Agent
+# VocalizeBot
 
 <div align="center">
   <img src="https://img.shields.io/badge/Python-3.11+-blue.svg" alt="Python">
@@ -8,7 +8,7 @@
   <img src="https://img.shields.io/badge/Instagram-Integration-E4405F.svg" alt="Instagram">
 </div>
 
-**ReplyQ** is an advanced AI-powered customer management, sales coordination, and business operations agent operating over WhatsApp and Instagram. Built with modern AI technologies, it provides intelligent customer interactions, lead qualification, and seamless payment processing.
+**VocalizeBot** is an advanced AI-powered customer management, sales coordination, and business operations agent operating over WhatsApp and Instagram. Built with modern AI technologies, it provides intelligent customer interactions, lead qualification, and seamless payment processing.
 
 ## 🚀 Features
 
@@ -38,7 +38,7 @@
 ## 📁 Project Structure
 
 ```
-replyq-ai-agent/
+vocalizebot/
 ├── config/                  # Configuration files
 │   ├── settings.py         # Application settings (Pydantic)
 │   └── __init__.py
@@ -84,8 +84,8 @@ replyq-ai-agent/
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/yourusername/replyq-ai-agent.git
-cd replyq-ai-agent
+git clone https://github.com/yourusername/vocalizebot.git
+cd vocalizebot
 ```
 
 2. **Create virtual environment**
@@ -185,7 +185,7 @@ uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
 | `TWILIO_ACCOUNT_SID` | Twilio Account SID | Required for WhatsApp |
 | `TWILIO_AUTH_TOKEN` | Twilio Auth Token | Required for WhatsApp |
 | `STRIPE_API_KEY` | Stripe API key | Required for payments |
-| `DATABASE_URL` | Database connection string | `sqlite+aiosqlite:///./replyq.db` |
+| `DATABASE_URL` | Database connection string | `sqlite+aiosqlite:///./vocalizebot.db` |
 | `BLACKOUT_MODE_THRESHOLD` | Errors before escalation | `3` |
 
 ### Customer Segments
@@ -235,7 +235,7 @@ CMD ["python", "main.py"]
 ```yaml
 version: '3.8'
 services:
-  replyq:
+  vocalizebot:
     build: .
     ports:
       - "8000:8000"
@@ -281,5 +281,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 <div align="center">
   <p>Built with ❤️ by <a href="https://github.com/yourusername">Your Name</a></p>
-  <p>ReplyQ AI Agent - Advanced Customer Management & Sales</p>
+  <p>VocalizeBot - Advanced Customer Management & Sales</p>
 </div>

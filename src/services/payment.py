@@ -1,5 +1,5 @@
 """
-ReplyQ AI Agent - Payment Service (PayPal Integration)
+VocalizeBot - Payment Service (PayPal Integration)
 Open Hands Agent | Tal HaTil Empire
 """
 import hashlib

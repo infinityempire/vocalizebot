@@ -1,5 +1,5 @@
 """
-ReplyQ AI Agent - Database Models
+VocalizeBot - Database Models
 """
 from sqlalchemy import Column, String, Integer, Float, DateTime, Boolean, Text, ForeignKey, Enum as SQLEnum
 from sqlalchemy.orm import relationship, declarative_base

@@ -1,5 +1,5 @@
 """
-ReplyQ AI Agent - Unit Tests
+VocalizeBot - Unit Tests
 """
 import pytest
 import asyncio
@@ -388,7 +388,7 @@ class TestSettings:
         
         settings = get_settings()
         
-        assert settings.app_name == "ReplyQ AI Agent"
+        assert settings.app_name == "VocalizeBot"
         assert settings.app_version == "1.0.0"
         
     def test_database_url_default(self):

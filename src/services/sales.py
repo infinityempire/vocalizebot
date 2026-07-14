@@ -1,5 +1,5 @@
 """
-ReplyQ AI Agent - Sales Coordination Service
+VocalizeBot - Sales Coordination Service
 """
 from typing import Optional, Dict, Any, List
 from datetime import datetime, timedelta
