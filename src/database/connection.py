@@ -10,14 +10,16 @@ from config.settings import get_settings
 settings = get_settings()
 
 # Create async engine
-engine = create_async_engine(
-    settings.database_url,
-    echo=settings.database_echo,
-    future=True,
-    pool_pre_ping=True,
-    pool_size=10,
-    max_overflow=20
-)
+engine_kwargs = {
+    "echo": settings.database_echo,
+    "future": True,
+}
+if settings.database_url and "sqlite" not in settings.database_url:
+    engine_kwargs["pool_pre_ping"] = True
+    engine_kwargs["pool_size"] = 10
+    engine_kwargs["max_overflow"] = 20
+
+engine = create_async_engine(settings.database_url, **engine_kwargs)
 
 # Create session factory
 async_session_factory = async_sessionmaker(

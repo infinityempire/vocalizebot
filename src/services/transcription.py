@@ -81,17 +81,18 @@ class TranscriptionService:
         Internal method to call Gemini API for transcription.
         
         Gemini models can process audio files directly. We convert the
-        audio to base64 and send it to the API.
+        audio to base64 and send it to the API with retry logic and
+        robust error handling.
         """
         import base64
+        import time
+        import random
         
         # Convert audio to base64
         audio_b64 = base64.b64encode(audio_data).decode("utf-8")
         
         # Build prompt for transcription
-        prompt_parts = [
-            {"text": self._build_transcription_prompt(language)},
-        ]
+        prompt_text = self._build_transcription_prompt(language)
         
         # Gemini expects inline data with mime type
         inline_data = {
@@ -102,7 +103,7 @@ class TranscriptionService:
         payload = {
             "contents": [{
                 "parts": [
-                    {"text": prompt_parts[0]["text"]},
+                    {"text": prompt_text},
                     {"inline_data": inline_data}
                 ]
             }],
@@ -114,34 +115,112 @@ class TranscriptionService:
         
         url = f"{self.base_url}/models/{self.model}:generateContent?key={self.api_key}"
         
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            response = await client.post(url, json=payload)
-            
-            if response.status_code != 200:
-                error_msg = response.text
-                logger.error(f"Gemini API error: {response.status_code} - {error_msg}")
-                raise TranscriptionError(f"Gemini API returned {response.status_code}")
-            
-            result = response.json()
-            
-            # Extract transcription from response
-            if "candidates" in result and len(result["candidates"]) > 0:
-                candidate = result["candidates"][0]
-                if "content" in candidate and "parts" in candidate["content"]:
-                    parts = candidate["content"]["parts"]
-                    transcribed_text = ""
-                    for part in parts:
-                        if "text" in part:
-                            transcribed_text += part["text"]
+        max_retries = 3
+        backoff_factor = 2.0
+        
+        for attempt in range(max_retries):
+            start_time = time.time()
+            try:
+                logger.debug(f"Sending request to Gemini API (Attempt {attempt + 1}/{max_retries})")
+                async with httpx.AsyncClient(timeout=60.0) as client:
+                    response = await client.post(url, json=payload)
+                
+                duration = time.time() - start_time
+                logger.debug(f"Gemini API request took {duration:.2f}s, status: {response.status_code}")
+                
+                # Check for rate limit (429) or temporary server errors (5xx)
+                if response.status_code in (429, 500, 502, 503, 504):
+                    try:
+                        err_json = response.json()
+                        err_msg = err_json.get("error", {}).get("message", "Unknown error")
+                        err_status = err_json.get("error", {}).get("status", "Unknown status")
+                        logger.warning(
+                            f"Gemini API returned transient status {response.status_code}: {err_status} - {err_msg}"
+                        )
+                    except Exception:
+                        logger.warning(f"Gemini API returned transient status {response.status_code}")
                     
-                    return TranscriptionResult(
-                        text=transcribed_text.strip(),
-                        confidence=0.95,  # Gemini doesn't provide confidence, estimate
-                        language=language or "auto",
-                        model_used=self.model
-                    )
-            
-            raise TranscriptionError("No transcription in Gemini response")
+                    if attempt == max_retries - 1:
+                        raise TranscriptionError(
+                            f"Gemini API error (Status {response.status_code}) after {max_retries} attempts"
+                        )
+                    
+                    sleep_time = (backoff_factor ** attempt) + random.uniform(0.1, 0.5)
+                    logger.info(f"Retrying in {sleep_time:.2f}s...")
+                    await asyncio.sleep(sleep_time)
+                    continue
+                
+                # For other non-200 status codes (such as 400, 401, 403) - do not retry
+                if response.status_code != 200:
+                    try:
+                        err_json = response.json()
+                        err_msg = err_json.get("error", {}).get("message", "No details")
+                        err_status = err_json.get("error", {}).get("status", "No status")
+                        logger.error(f"Gemini API Client Error {response.status_code}: [{err_status}] {err_msg}")
+                        raise TranscriptionError(f"Gemini API Authentication/Configuration Error: {err_msg}")
+                    except ValueError:
+                        logger.error(f"Gemini API Client Error {response.status_code}: {response.text}")
+                        raise TranscriptionError(f"Gemini API returned client error {response.status_code}")
+                
+                # Parse JSON response
+                try:
+                    result = response.json()
+                except ValueError as e:
+                    logger.error(f"Failed to parse Gemini response as JSON: {response.text[:500]}")
+                    raise TranscriptionError(f"Invalid JSON response from Gemini API: {e}")
+                
+                # Extract transcription from response
+                if "candidates" in result and len(result["candidates"]) > 0:
+                    candidate = result["candidates"][0]
+                    
+                    # Check finish reason
+                    finish_reason = candidate.get("finishReason")
+                    if finish_reason and finish_reason != "STOP":
+                        logger.warning(f"Gemini generation did not finish with STOP. Reason: {finish_reason}")
+                        if finish_reason == "SAFETY":
+                            raise TranscriptionError("Transcription blocked due to safety content filtering")
+                        elif finish_reason == "RECITATION":
+                            raise TranscriptionError("Transcription blocked due to recitation check")
+                    
+                    if "content" in candidate and "parts" in candidate["content"]:
+                        parts = candidate["content"]["parts"]
+                        transcribed_text = ""
+                        for part in parts:
+                            if "text" in part:
+                                transcribed_text += part["text"]
+                        
+                        return TranscriptionResult(
+                            text=transcribed_text.strip(),
+                            confidence=0.95,  # Gemini doesn't provide confidence, estimate
+                            language=language or "auto",
+                            model_used=self.model
+                        )
+                
+                # If we get here, response is valid JSON but has unexpected structure
+                # Check for prompt feedback block
+                prompt_feedback = result.get("promptFeedback", {})
+                if prompt_feedback and "blockReason" in prompt_feedback:
+                    reason = prompt_feedback.get("blockReason")
+                    logger.error(f"Gemini API blocked the transcription prompt. Reason: {reason}")
+                    raise TranscriptionError(f"Prompt blocked by safety filters: {reason}")
+                
+                logger.error(f"Unexpected Gemini API response structure: {list(result.keys())}")
+                raise TranscriptionError("No transcription candidate returned by Gemini API")
+                
+            except (httpx.ConnectError, httpx.TimeoutException) as e:
+                logger.warning(f"Network error calling Gemini API (Attempt {attempt + 1}/{max_retries}): {e}")
+                if attempt == max_retries - 1:
+                    raise TranscriptionError(f"Network timeout/connectivity error calling Gemini API: {e}")
+                
+                sleep_time = (backoff_factor ** attempt) + random.uniform(0.1, 0.5)
+                await asyncio.sleep(sleep_time)
+                continue
+                
+            except Exception as e:
+                if isinstance(e, TranscriptionError):
+                    raise
+                logger.exception(f"Unexpected error in Gemini API call: {e}")
+                raise TranscriptionError(f"Unexpected error in Gemini API call: {e}")
     
     def _build_transcription_prompt(self, language: Optional[str] = None) -> str:
         """
@@ -180,18 +259,25 @@ If you cannot hear clearly, return [unclear]."""
         """
         logger.info(f"Downloading audio from {file_url}")
         
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            response = await client.get(file_url)
-            response.raise_for_status()
+        try:
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                response = await client.get(file_url)
+                response.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            logger.error(f"Failed to download audio from URL: Status {e.response.status_code} - {file_url}")
+            raise TranscriptionError(f"Failed to download audio from source URL (Status {e.response.status_code})")
+        except httpx.HTTPError as e:
+            logger.error(f"Network error downloading audio from {file_url}: {e}")
+            raise TranscriptionError(f"Network error downloading audio file: {e}")
             
-            content_type = response.headers.get("content-type", "audio/ogg")
-            filename = f"audio.{content_type.split('/')[-1]}"
-            
-            return await self.transcribe_audio(
-                response.content,
-                filename=filename,
-                language=language
-            )
+        content_type = response.headers.get("content-type", "audio/ogg")
+        filename = f"audio.{content_type.split('/')[-1]}"
+        
+        return await self.transcribe_audio(
+            response.content,
+            filename=filename,
+            language=language
+        )
 
 
 class TranscriptionError(Exception):

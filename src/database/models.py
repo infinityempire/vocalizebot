@@ -139,6 +139,9 @@ class Message(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     processed_at = Column(DateTime, nullable=True)
 
+    # Relationships
+    conversation = relationship("Conversation", back_populates="messages")
+
 
 class Interaction(Base):
     """Customer interaction tracking."""
@@ -149,7 +152,7 @@ class Interaction(Base):
     
     interaction_type = Column(String)  # message, purchase, complaint, payment
     description = Column(Text)
-    metadata = Column(Text, nullable=True)  # JSON data
+    interaction_metadata = Column("metadata", Text, nullable=True)  # JSON data
     
     created_at = Column(DateTime, default=datetime.utcnow)
 

@@ -22,6 +22,7 @@ class Settings(BaseSettings):
 
     # AI Providers - Google AI Studio (Primary)
     google_ai_api_key: Optional[str] = None
+    openai_api_key: Optional[str] = None
     anthropic_api_key: Optional[str] = None
     default_ai_provider: str = "google"
     ai_model: str = "gemini-1.5-pro"
@@ -85,6 +86,7 @@ class Settings(BaseSettings):
         env_file = ".env"
         env_file_encoding = "utf-8"
         case_sensitive = False
+        extra = "ignore"
 
 
 @lru_cache()
