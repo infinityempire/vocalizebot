@@ -25,6 +25,7 @@ from telegram.ext import (
 from src.config import settings
 from src.models import MessageType, BotResponse
 from src.services.transcription import get_transcription_service, TranscriptionError
+from src.services.summarization import generate_summary
 
 
 # Conversation states
@@ -187,14 +188,40 @@ class TelegramBot:
                 f"'{result.text[:50]}...' (confidence: {result.confidence})"
             )
             
-            # Step 4: Edit the processing message with results
-            if user_lang == "he":
-                response_text = f"📝 **תמלול:**\n\n{result.text}"
-                response_text += f"\n\n_מודל: {result.model_used}_"
+            # Step 4: Generate summary if transcription is too long
+            if len(result.text) > 500:
+                try:
+                    summary = await generate_summary(result.text, language=user_lang)
+                    if user_lang == "he":
+                        response_text = (
+                            "📝 **תקציר מהיר (TL;DR):**\n"
+                            + "\n".join([f"• {point}" for point in summary])
+                            + "\n\n---\n"
+                            + f"💬 **התמלול המלא:**\n{result.text}"
+                        )
+                    else:
+                        response_text = (
+                            "📝 **Quick Summary (TL;DR):**\n"
+                            + "\n".join([f"• {point}" for point in summary])
+                            + "\n\n---\n"
+                            + f"💬 **Full Transcription:**\n{result.text}"
+                        )
+                except Exception as e:
+                    logger.warning(f"Failed to generate summary: {e}")
+                    if user_lang == "he":
+                        response_text = f"📝 **תמלול:**\n\n{result.text}"
+                        response_text += f"\n\n_מודל: {result.model_used}_"
+                    else:
+                        response_text = f"📝 **Transcription:**\n\n{result.text}"
+                        response_text += f"\n\n_Model: {result.model_used}_"
             else:
-                response_text = f"📝 **Transcription:**\n\n{result.text}"
-                response_text += f"\n\n_Model: {result.model_used}_"
-            
+                if user_lang == "he":
+                    response_text = f"📝 **תמלול:**\n\n{result.text}"
+                    response_text += f"\n\n_מודל: {result.model_used}_"
+                else:
+                    response_text = f"📝 **Transcription:**\n\n{result.text}"
+                    response_text += f"\n\n_Model: {result.model_used}_"
+
             await processing_msg.edit_text(response_text, parse_mode="Markdown")
             
             # Store context for potential follow-up
