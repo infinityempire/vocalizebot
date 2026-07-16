@@ -1,5 +1,5 @@
 """
-ReplyQ AI Agent - Business Management Service
+VocalizeBot - Business Management Service
 """
 from typing import Optional, Dict, Any, List
 from datetime import datetime, timedelta

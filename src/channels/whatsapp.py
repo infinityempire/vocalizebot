@@ -1,5 +1,5 @@
 """
-ReplyQ AI Agent - WhatsApp Channel Integration (Twilio)
+VocalizeBot - WhatsApp Channel Integration (Twilio)
 """
 import hashlib
 import hmac

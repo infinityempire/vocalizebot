@@ -1,23 +1,23 @@
 # GitHub Repository Setup Instructions
 
 ## Current Status
-The ReplyQ AI Agent project has been fully developed and is ready to push to GitHub. The code has been committed locally but requires manual creation of the GitHub repository due to API token permissions.
+The VocalizeBot project has been fully developed and is ready to push to GitHub. The code has been committed locally but requires manual creation of the GitHub repository due to API token permissions.
 
 ## Quick Setup Steps
 
 ### Option 1: Create Repository on GitHub.com (Recommended)
 
 1. Go to: https://github.com/new
-2. Repository name: `replyq-ai-agent`
-3. Description: `ReplyQ AI Agent - Advanced Customer Management, Sales & Business Operations on WhatsApp and Instagram`
+2. Repository name: `vocalizebot`
+3. Description: `VocalizeBot - Advanced Customer Management, Sales & Business Operations on WhatsApp and Instagram`
 4. Select: Public
 5. Click: "Create repository"
 6. On the next page, copy the commands under "...or push an existing repository from the command line"
 7. Run the commands in your local repository directory:
 
 ```bash
-cd replyq-ai-agent
-git remote add origin https://github.com/YOUR_USERNAME/replyq-ai-agent.git
+cd vocalizebot
+git remote add origin https://github.com/YOUR_USERNAME/vocalizebot.git
 git branch -M main
 git push -u origin main
 ```
@@ -28,8 +28,8 @@ If you have GitHub CLI installed and authenticated:
 
 ```bash
 gh auth login
-cd replyq-ai-agent
-gh repo create replyq-ai-agent --public --source=. --remote=origin
+cd vocalizebot
+gh repo create vocalizebot --public --source=. --remote=origin
 ```
 
 ### Option 3: Using the API with Proper Token
@@ -40,11 +40,11 @@ If your token has repository creation permissions:
 curl -X POST -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   https://api.github.com/user/repos \
-  -d '{"name":"replyq-ai-agent","description":"ReplyQ AI Agent","private":false}'
+  -d '{"name":"vocalizebot","description":"VocalizeBot","private":false}'
 
 # Then push:
-cd replyq-ai-agent
-git remote add origin https://github.com/YOUR_USERNAME/replyq-ai-agent.git
+cd vocalizebot
+git remote add origin https://github.com/YOUR_USERNAME/vocalizebot.git
 git push -u origin main
 ```
 
@@ -52,12 +52,12 @@ git push -u origin main
 
 After creating the repository, the URL will be:
 ```
-https://github.com/infinityempire/replyq-ai-agent
+https://github.com/infinityempire/vocalizebot
 ```
 
 ## What Was Built
 
-The complete ReplyQ AI Agent system includes:
+The complete VocalizeBot system includes:
 
 ### Multi-Channel Integration
 - WhatsApp webhook handler (Twilio)

@@ -1,5 +1,5 @@
 """
-ReplyQ AI Agent - Application Settings
+VocalizeBot - Application Settings
 Open Hands Agent | Tal HaTil Empire
 """
 from pydantic_settings import BaseSettings
@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
     # Application
-    app_name: str = "ReplyQ AI Agent"
+    app_name: str = "VocalizeBot"
     app_version: str = "2.0.0"
     debug: bool = False
     log_level: str = "INFO"
@@ -39,7 +39,7 @@ class Settings(BaseSettings):
     # Instagram
     instagram_access_token: Optional[str] = None
     instagram_app_secret: Optional[str] = None
-    instagram_webhook_verify_token: str = "replyq_verify_token"
+    instagram_webhook_verify_token: str = "vocalizebot_verify_token"
 
     # Telegram (Primary Channel)
     telegram_bot_token: Optional[str] = None
@@ -47,7 +47,7 @@ class Settings(BaseSettings):
     telegram_allow_groups: bool = False
 
     # Database
-    database_url: str = "sqlite+aiosqlite:///./replyq.db"
+    database_url: str = "sqlite+aiosqlite:///./vocalizebot.db"
     database_echo: bool = False
 
     # Redis

@@ -1,5 +1,5 @@
 """
-ReplyQ AI Agent - Sales Coordination Service
+VocalizeBot - Sales Coordination Service
 """
 from typing import Optional, Dict, Any, List
 from datetime import datetime, timedelta
@@ -197,7 +197,7 @@ class SalesService:
             response = await agent.handle_objection(
                 objection=objection,
                 segment=customer.segment.value,
-                product_info=context.get("product_interest", "our products")
+                product_info="Premium Subscription - Unlimited Transcriptions"
             )
 
             # Log the objection
