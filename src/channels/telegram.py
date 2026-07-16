@@ -144,8 +144,26 @@ class TelegramBot:
             f"duration: {voice.duration}s, file_id: {voice.file_id}"
         )
         
+        # Trigger chat action
+        try:
+            await context.bot.send_chat_action(chat_id=chat_id, action="typing")
+        except Exception as e:
+            logger.warning(f"Failed to send chat action: {e}")
+            
+        user_lang = self._get_user_language(user_id)
+        
+        # Select status and error messages based on language
+        if user_lang == "he":
+            status_text = "🎙️ מעבד ומתמלל את הודעת השמע שלך... 🎧"
+            error_text = "❌ מצטער, לא הצלחתי לתמלל את הודעת השמע הזו. אנא נסה שוב מאוחר יותר."
+            unexpected_error_text = "⚠️ אירעה שגיאה בלתי צפויה. אנא נסה שוב מאוחר יותר."
+        else:
+            status_text = "🎙️ Processing and transcribing your audio... 🎧"
+            error_text = "❌ Sorry, I couldn't transcribe this audio. Please try again later."
+            unexpected_error_text = "⚠️ An unexpected error occurred. Please try again later."
+            
         # Send "processing" indicator
-        processing_msg = await update.message.reply_text("🎙️ מעבד הודעה קולית...")
+        processing_msg = await update.message.reply_text(status_text)
         
         try:
             # Step 1: Download the voice file from Telegram
@@ -154,10 +172,7 @@ class TelegramBot:
             
             logger.debug(f"Downloaded voice file: {len(voice_bytes)} bytes")
             
-            # Step 2: Get user language preference
-            user_lang = self._get_user_language(user_id)
-            
-            # Step 3: Route to Google AI Studio Transcription Service
+            # Step 2: Route to Google AI Studio Transcription Service
             transcription_service = get_transcription_service()
             
             result = await transcription_service.transcribe_audio(
@@ -166,15 +181,19 @@ class TelegramBot:
                 language=user_lang
             )
             
-            # Step 4: Log the transcription result
+            # Step 3: Log the transcription result
             logger.info(
                 f"Transcription completed for user {user_id}: "
                 f"'{result.text[:50]}...' (confidence: {result.confidence})"
             )
             
-            # Step 5: Edit the processing message with results
-            response_text = f"📝 **תמלול:**\n\n{result.text}"
-            response_text += f"\n\n_מודל: {result.model_used}_"
+            # Step 4: Edit the processing message with results
+            if user_lang == "he":
+                response_text = f"📝 **תמלול:**\n\n{result.text}"
+                response_text += f"\n\n_מודל: {result.model_used}_"
+            else:
+                response_text = f"📝 **Transcription:**\n\n{result.text}"
+                response_text += f"\n\n_Model: {result.model_used}_"
             
             await processing_msg.edit_text(response_text, parse_mode="Markdown")
             
@@ -183,15 +202,11 @@ class TelegramBot:
             
         except TranscriptionError as e:
             logger.error(f"Transcription failed for user {user_id}: {e}")
-            await processing_msg.edit_text(
-                "❌ אירעה שגיאה בתמלול ההודעה. אנא נסה שוב."
-            )
+            await processing_msg.edit_text(error_text)
             
         except Exception as e:
             logger.exception(f"Unexpected error handling voice message: {e}")
-            await processing_msg.edit_text(
-                "⚠️ אירעה שגיאה בלתי צפויה. אנא נסה שוב מאוחר יותר."
-            )
+            await processing_msg.edit_text(unexpected_error_text)
     
     # =========================================================================
     # AUDIO MESSAGE HANDLING
@@ -202,7 +217,7 @@ class TelegramBot:
         Handle incoming audio files (as files, not voice notes).
         
         Similar to voice messages but handles audio files sent
-        as documents.
+        as documents with robust UX and error handling.
         """
         user_id = update.effective_user.id
         chat_id = update.effective_chat.id
@@ -210,7 +225,25 @@ class TelegramBot:
         
         logger.info(f"Audio file received from user {user_id}: {audio.file_name}")
         
-        processing_msg = await update.message.reply_text("🎵 מעבד קובץ שמע...")
+        # Trigger chat action
+        try:
+            await context.bot.send_chat_action(chat_id=chat_id, action="typing")
+        except Exception as e:
+            logger.warning(f"Failed to send chat action: {e}")
+            
+        user_lang = self._get_user_language(user_id)
+        
+        # Select status and error messages based on language
+        if user_lang == "he":
+            status_text = "🎵 מעבד ומתמלל את קובץ השמע שלך... 🎧"
+            error_text = "❌ מצטער, לא הצלחתי לתמלל את קובץ השמע הזה. אנא נסה שוב מאוחר יותר."
+            unexpected_error_text = "⚠️ אירעה שגיאה בלתי צפויה. אנא נסה שוב מאוחר יותר."
+        else:
+            status_text = "🎵 Processing and transcribing your audio file... 🎧"
+            error_text = "❌ Sorry, I couldn't transcribe this audio file. Please try again later."
+            unexpected_error_text = "⚠️ An unexpected error occurred. Please try again later."
+            
+        processing_msg = await update.message.reply_text(status_text)
         
         try:
             # Download audio file
@@ -222,19 +255,26 @@ class TelegramBot:
             result = await transcription_service.transcribe_audio(
                 audio_data=bytes(audio_bytes),
                 filename=audio.file_name or "audio.mp3",
-                language=self._get_user_language(user_id)
+                language=user_lang
             )
             
-            await processing_msg.edit_text(
-                f"📝 **תמלול:**\n\n{result.text}",
-                parse_mode="Markdown"
-            )
+            # Edit the processing message with results
+            if user_lang == "he":
+                response_text = f"📝 **תמלול:**\n\n{result.text}"
+                response_text += f"\n\n_מודל: {result.model_used}_"
+            else:
+                response_text = f"📝 **Transcription:**\n\n{result.text}"
+                response_text += f"\n\n_Model: {result.model_used}_"
+                
+            await processing_msg.edit_text(response_text, parse_mode="Markdown")
+            
+        except TranscriptionError as e:
+            logger.error(f"Audio transcription failed for user {user_id}: {e}")
+            await processing_msg.edit_text(error_text)
             
         except Exception as e:
-            logger.error(f"Audio transcription failed: {e}")
-            await processing_msg.edit_text(
-                "❌ אירעה שגיאה בתמלול קובץ השמע."
-            )
+            logger.exception(f"Unexpected error handling audio message: {e}")
+            await processing_msg.edit_text(unexpected_error_text)
     
     # =========================================================================
     # TEXT MESSAGE HANDLING
