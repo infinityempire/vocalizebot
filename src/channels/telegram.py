@@ -26,6 +26,7 @@ from src.config import settings
 from src.models import MessageType, BotResponse
 from src.services.transcription import get_transcription_service, TranscriptionError
 from src.services.summarization import generate_summary
+from subscription_manager import SubscriptionManager # NEW: Import SubscriptionManager
 
 
 # Conversation states
@@ -40,12 +41,13 @@ class TelegramBot:
     incoming messages to appropriate handlers.
     """
     
-    def __init__(self, token: Optional[str] = None):
+    def __init__(self, token: Optional[str] = None, subscription_manager: Optional[SubscriptionManager] = None): # MODIFIED
         """
         Initialize the Telegram bot.
         
         Args:
             token: Telegram bot token. Uses settings if not provided.
+            subscription_manager: An instance of SubscriptionManager for user limits. # NEW
         """
         self.token = token or settings.TELEGRAM_BOT_TOKEN
         if not self.token:
@@ -54,6 +56,11 @@ class TelegramBot:
         self.app: Optional[Application] = None
         self.user_contexts: Dict[int, Dict[str, Any]] = {}
         self._running = False
+        self.subscription_manager = subscription_manager # NEW: Store the manager
+        if self.subscription_manager:
+            logger.info("SubscriptionManager integrated into TelegramBot.")
+        else:
+            logger.warning("SubscriptionManager not provided to TelegramBot. Subscription checks will be skipped.")
     
     async def start(self) -> None:
         """Start the Telegram bot polling."""
@@ -145,6 +152,19 @@ class TelegramBot:
             f"duration: {voice.duration}s, file_id: {voice.file_id}"
         )
         
+        # NEW: Subscription check for voice messages
+        if self.subscription_manager:
+            # Ensure user exists in the subscription manager
+            self.subscription_manager.add_user(str(user_id)) # Add user if not exists
+            
+            allowed, message = self.subscription_manager.can_transcribe(str(user_id), voice.duration)
+            if not allowed:
+                await update.message.reply_text(message)
+                logger.info(f"User {user_id} blocked from transcribing voice due to: {message}")
+                return # Stop processing if not allowed
+        else:
+            logger.warning("SubscriptionManager not available, skipping voice transcription limits check.")
+
         # Trigger chat action
         try:
             await context.bot.send_chat_action(chat_id=chat_id, action="typing")
@@ -226,6 +246,11 @@ class TelegramBot:
             
             # Store context for potential follow-up
             self._update_user_context(user_id, last_transcription=result.text)
+
+            # NEW: Increment transcription count after successful transcription
+            if self.subscription_manager:
+                self.subscription_manager.increment_transcription_count(str(user_id))
+                logger.info(f"Transcription count incremented for user {user_id}.")
             
         except TranscriptionError as e:
             logger.error(f"Transcription failed for user {user_id}: {e}")
@@ -248,9 +273,41 @@ class TelegramBot:
         """
         user_id = update.effective_user.id
         chat_id = update.effective_chat.id
-        audio = update.message.audio or update.message.document
+        audio = update.message.audio # This will be a telegram.Audio object if it's an audio file
+        document = update.message.document # This will be a telegram.Document object if it's a document
         
-        logger.info(f"Audio file received from user {user_id}: {audio.file_name}")
+        # Determine if it's an audio file and get duration if available
+        duration = 0
+        file_to_process = None
+        if audio:
+            logger.info(f"Audio file received from user {user_id}: {audio.file_name}, duration: {audio.duration}s")
+            duration = audio.duration
+            file_to_process = audio
+        elif document and document.mime_type and document.mime_type.startswith('audio/'):
+            logger.info(f"Audio document received from user {user_id}: {document.file_name}")
+            # For documents, duration is not directly available on the Document object.
+            # We'll use a placeholder duration for the check, effectively only checking daily count.
+            duration = 1 # Use a minimal duration to pass length check for premium/free tiers
+            file_to_process = document
+        else:
+            # This handler should ideally only get audio files, but as a fallback
+            logger.warning(f"Unhandled audio/document type in _handle_audio_message for user {user_id}")
+            await update.message.reply_text("🤔 I can only process audio files. Please send a voice note or an audio file.")
+            return
+
+        # NEW: Subscription check for audio messages
+        if self.subscription_manager:
+            self.subscription_manager.add_user(str(user_id)) # Add user if not exists
+            
+            # For audio files, we pass the determined duration. If it's a document,
+            # we pass 1 to effectively only check the daily count.
+            allowed, message = self.subscription_manager.can_transcribe(str(user_id), duration)
+            if not allowed:
+                await update.message.reply_text(message)
+                logger.info(f"User {user_id} blocked from transcribing audio due to: {message}")
+                return # Stop processing if not allowed
+        else:
+            logger.warning("SubscriptionManager not available, skipping audio transcription limits check.")
         
         # Trigger chat action
         try:
@@ -274,14 +331,14 @@ class TelegramBot:
         
         try:
             # Download audio file
-            audio_file = await context.bot.get_file(audio.file_id)
+            audio_file = await context.bot.get_file(file_to_process.file_id)
             audio_bytes = await audio_file.download_as_bytearray()
             
             # Get transcription
             transcription_service = get_transcription_service()
             result = await transcription_service.transcribe_audio(
                 audio_data=bytes(audio_bytes),
-                filename=audio.file_name or "audio.mp3",
+                filename=file_to_process.file_name or "audio.mp3",
                 language=user_lang
             )
             
@@ -294,6 +351,11 @@ class TelegramBot:
                 response_text += f"\n\n_Model: {result.model_used}_"
                 
             await processing_msg.edit_text(response_text, parse_mode="Markdown")
+
+            # NEW: Increment transcription count after successful transcription
+            if self.subscription_manager:
+                self.subscription_manager.increment_transcription_count(str(user_id))
+                logger.info(f"Transcription count incremented for user {user_id}.")
             
         except TranscriptionError as e:
             logger.error(f"Audio transcription failed for user {user_id}: {e}")
@@ -404,24 +466,17 @@ class TelegramBot:
 _telegram_bot: Optional[TelegramBot] = None
 
 
-def get_telegram_bot() -> TelegramBot:
+def get_telegram_bot(subscription_manager: Optional[SubscriptionManager] = None) -> TelegramBot: # MODIFIED
     """Get or create the global Telegram bot instance."""
     global _telegram_bot
     if _telegram_bot is None:
-        _telegram_bot = TelegramBot()
+        # Only initialize with manager if it's the first time
+        _telegram_bot = TelegramBot(subscription_manager=subscription_manager)
     return _telegram_bot
 
 
-async def start_telegram_bot() -> TelegramBot:
+async def start_telegram_bot(subscription_manager: Optional[SubscriptionManager] = None) -> TelegramBot: # MODIFIED
     """Start the Telegram bot and return the instance."""
-    bot = get_telegram_bot()
+    bot = get_telegram_bot(subscription_manager=subscription_manager) # Pass manager to get_telegram_bot
     await bot.start()
     return bot
-
-
-async def stop_telegram_bot() -> None:
-    """Stop the Telegram bot."""
-    global _telegram_bot
-    if _telegram_bot:
-        await _telegram_bot.stop()
-        _telegram_bot = None

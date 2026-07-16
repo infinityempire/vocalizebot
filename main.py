@@ -19,6 +19,7 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 from src.config import settings
 from src.channels.telegram import start_telegram_bot, stop_telegram_bot
 from src.services.transcription import get_transcription_service
+from subscription_manager import SubscriptionManager # NEW: Import SubscriptionManager
 
 
 # ============================================================================
@@ -27,6 +28,8 @@ from src.services.transcription import get_transcription_service
 
 # Global Telegram application instance for webhook handling
 telegram_app: Optional[Application] = None
+# NEW: Global SubscriptionManager instance
+subscription_manager_instance: Optional[SubscriptionManager] = None
 
 
 async def setup_telegram_webhook(webhook_url: str) -> bool:
@@ -125,15 +128,24 @@ async def lifespan(app: FastAPI):
     Application lifespan manager.
     
     Handles startup and shutdown:
-    1. Sets up Telegram webhook automatically
-    2. Initializes the Telegram bot application
-    3. Cleans up on shutdown
+    1. Initializes the SubscriptionManager
+    2. Sets up Telegram webhook automatically or starts polling
+    3. Initializes the Telegram bot application
+    4. Cleans up on shutdown
     """
-    global telegram_task, telegram_app
+    global telegram_task, telegram_app, subscription_manager_instance # MODIFIED: Added subscription_manager_instance
     
     logger.info(f"Starting {settings.APP_NAME} v{settings.APP_VERSION}")
     
     # Startup
+    
+    # NEW: Initialize SubscriptionManager
+    # The database path should ideally come from settings (e.g., settings.SUBSCRIPTION_DB_PATH).
+    # For now, using a default 'subscriptions.db'.
+    db_path = getattr(settings, 'SUBSCRIPTION_DB_PATH', 'subscriptions.db')
+    subscription_manager_instance = SubscriptionManager(db_path=db_path)
+    logger.info(f"SubscriptionManager initialized with DB: {db_path}")
+
     if settings.TELEGRAM_BOT_TOKEN:
         try:
             # Build webhook URL from request (will be updated on first request)
@@ -149,14 +161,18 @@ async def lifespan(app: FastAPI):
                 
                 # Register message handlers
                 from src.channels.telegram import TelegramBot
-                tb = TelegramBot()
+                # MODIFIED: Pass the subscription_manager_instance to TelegramBot
+                tb = TelegramBot(subscription_manager=subscription_manager_instance)
                 tb.app = telegram_app
                 tb._register_handlers()
                 
                 logger.info("Telegram webhook mode enabled")
             else:
                 logger.warning("TELEGRAM_WEBHOOK_URL not set - falling back to polling mode")
-                telegram_task = asyncio.create_task(start_telegram_bot())
+                # In polling mode, start_telegram_bot() is responsible for creating and running the bot.
+                # It would need to be updated in src/channels/telegram.py to also pass the
+                # subscription_manager_instance to the TelegramBot constructor if it instantiates it.
+                telegram_task = asyncio.create_task(start_telegram_bot(subscription_manager=subscription_manager_instance)) # MODIFIED
                 logger.info("Telegram polling mode started")
                 
         except Exception as e:
@@ -284,103 +300,4 @@ async def telegram_webhook(request: Request):
 
 
 @app.post("/webhook/setup", tags=["Telegram"])
-async def setup_webhook_endpoint(webhook_url: str):
-    """
-    Manually set up Telegram webhook.
-    
-    Args:
-        webhook_url: The full URL for Telegram to send updates to
-    """
-    success = await setup_telegram_webhook(webhook_url)
-    if success:
-        return {"status": "ok", "message": f"Webhook set to {webhook_url}"}
-    raise HTTPException(
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        detail="Failed to set webhook"
-    )
-
-
-@app.post("/webhook/delete", tags=["Telegram"])
-async def delete_webhook_endpoint():
-    """Delete the Telegram webhook."""
-    success = await delete_telegram_webhook()
-    if success:
-        return {"status": "ok", "message": "Webhook deleted"}
-    raise HTTPException(
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        detail="Failed to delete webhook"
-    )
-
-
-@app.post("/transcribe", response_model=TranscriptionResponse, tags=["Transcription"])
-async def transcribe_audio(request: TranscriptionRequest):
-    """
-    Manual transcription endpoint.
-    
-    Allows transcribing audio from a URL without going through Telegram.
-    """
-    if not request.audio_url:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="audio_url is required"
-        )
-    
-    if not settings.GOOGLE_AI_API_KEY:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Transcription service not configured"
-        )
-    
-    try:
-        service = get_transcription_service()
-        result = await service.transcribe_from_url(
-            file_url=request.audio_url,
-            language=request.language
-        )
-        
-        return TranscriptionResponse(
-            success=True,
-            text=result.text,
-            confidence=result.confidence,
-            model=result.model_used,
-        )
-        
-    except Exception as e:
-        logger.error(f"Transcription request failed: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
-        )
-
-
-@app.get("/config", tags=["Config"])
-async def get_config():
-    """
-    Get current configuration status.
-    
-    Returns which features are enabled (without exposing sensitive data).
-    """
-    return {
-        "app_name": settings.APP_NAME,
-        "debug": settings.DEBUG,
-        "telegram_enabled": bool(settings.TELEGRAM_BOT_TOKEN),
-        "transcription_enabled": bool(settings.GOOGLE_AI_API_KEY),
-        "paypal_enabled": bool(settings.PAYPAL_CLIENT_ID),
-        "google_ai_model": settings.GOOGLE_AI_MODEL,
-    }
-
-
-# ============================================================================
-# MAIN ENTRY POINT
-# ============================================================================
-
-if __name__ == "__main__":
-    import uvicorn
-    
-    uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=settings.DEBUG,
-        log_level="info" if not settings.DEBUG else "debug",
-    )
+async def setup_
