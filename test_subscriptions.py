@@ -1,5 +1,6 @@
 import os
 import unittest
+import sqlite3  # Added import for sqlite3
 from datetime import datetime, timedelta
 from subscription_manager import SubscriptionManager
 
@@ -17,7 +18,7 @@ class TestSubscriptionManager(unittest.TestCase):
     def test_add_user_defaults_to_free(self):
         """Test that a new user is added with the 'free' tier by default."""
         self.manager.add_user("user1")
-        with self.manager._initialize_database() as conn:
+        with sqlite3.connect(self.test_db) as conn: # Fixed: connect directly to the test DB
             cursor = conn.cursor()
             cursor.execute("SELECT tier FROM users WHERE user_id = ?", ("user1",))
             tier = cursor.fetchone()[0]
@@ -30,6 +31,7 @@ class TestSubscriptionManager(unittest.TestCase):
         for _ in range(3):
             allowed, message = self.manager.can_transcribe("user2", 30)
             self.assertTrue(allowed)
+            self.manager.increment_transcription_count("user2") # Fixed: increment count after successful transcription
         # Test exceeding daily limit
         allowed, message = self.manager.can_transcribe("user2", 30)
         self.assertFalse(allowed)
@@ -43,7 +45,7 @@ class TestSubscriptionManager(unittest.TestCase):
         """Test upgrading a user to the 'premium' tier."""
         self.manager.add_user("user3")
         self.manager.upgrade_tier("user3", "premium", duration_days=30)
-        with self.manager._initialize_database() as conn:
+        with sqlite3.connect(self.test_db) as conn: # Fixed: connect directly to the test DB
             cursor = conn.cursor()
             cursor.execute("SELECT tier, tier_expiration FROM users WHERE user_id = ?", ("user3",))
             tier, expiration = cursor.fetchone()
