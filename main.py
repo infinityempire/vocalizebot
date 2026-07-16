@@ -300,4 +300,103 @@ async def telegram_webhook(request: Request):
 
 
 @app.post("/webhook/setup", tags=["Telegram"])
-async def setup_
+async def setup_webhook_endpoint(webhook_url: str): # FIXED: Completed function definition
+    """
+    Manually set up Telegram webhook.
+    
+    Args:
+        webhook_url: The full URL for Telegram to send updates to
+    """
+    success = await setup_telegram_webhook(webhook_url)
+    if success:
+        return {"status": "ok", "message": f"Webhook set to {webhook_url}"}
+    raise HTTPException(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        detail="Failed to set webhook"
+    )
+
+
+@app.post("/webhook/delete", tags=["Telegram"])
+async def delete_webhook_endpoint():
+    """Delete the Telegram webhook."""
+    success = await delete_telegram_webhook()
+    if success:
+        return {"status": "ok", "message": "Webhook deleted"}
+    raise HTTPException(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        detail="Failed to delete webhook"
+    )
+
+
+@app.post("/transcribe", response_model=TranscriptionResponse, tags=["Transcription"])
+async def transcribe_audio(request: TranscriptionRequest):
+    """
+    Manual transcription endpoint.
+    
+    Allows transcribing audio from a URL without going through Telegram.
+    """
+    if not request.audio_url:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="audio_url is required"
+        )
+    
+    if not settings.GOOGLE_AI_API_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Transcription service not configured"
+        )
+    
+    try:
+        service = get_transcription_service()
+        result = await service.transcribe_from_url(
+            file_url=request.audio_url,
+            language=request.language
+        )
+        
+        return TranscriptionResponse(
+            success=True,
+            text=result.text,
+            confidence=result.confidence,
+            model=result.model_used,
+        )
+        
+    except Exception as e:
+        logger.error(f"Transcription request failed: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
+
+
+@app.get("/config", tags=["Config"])
+async def get_config():
+    """
+    Get current configuration status.
+    
+    Returns which features are enabled (without exposing sensitive data).
+    """
+    return {
+        "app_name": settings.APP_NAME,
+        "debug": settings.DEBUG,
+        "telegram_enabled": bool(settings.TELEGRAM_BOT_TOKEN),
+        "transcription_enabled": bool(settings.GOOGLE_AI_API_KEY),
+        "paypal_enabled": bool(settings.PAYPAL_CLIENT_ID),
+        "google_ai_model": settings.GOOGLE_AI_MODEL,
+    }
+
+
+# ============================================================================
+# MAIN ENTRY POINT
+# ============================================================================
+
+if __name__ == "__main__":
+    import uvicorn
+    
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=settings.DEBUG,
+        log_level="info" if not settings.DEBUG else "debug",
+    )
