@@ -27,19 +27,23 @@ class TestSubscriptionManager(unittest.TestCase):
     def test_free_tier_limits(self):
         """Test the limits of the 'free' tier."""
         self.manager.add_user("user2")
-        # Test within limits
+
+        # Test exceeding voice length when daily count is not yet reached
+        allowed, message = self.manager.can_transcribe("user2", 31)
+        self.assertFalse(allowed)
+        self.assertEqual(message, "Voice note exceeds maximum allowed length.")
+
+        # Test within daily limits
         for _ in range(3):
             allowed, message = self.manager.can_transcribe("user2", 30)
             self.assertTrue(allowed)
             self.manager.increment_transcription_count("user2") # Fixed: increment count after successful transcription
+
         # Test exceeding daily limit
         allowed, message = self.manager.can_transcribe("user2", 30)
         self.assertFalse(allowed)
         self.assertEqual(message, "Daily transcription limit reached.")
-        # Test exceeding voice length
-        allowed, message = self.manager.can_transcribe("user2", 31)
-        self.assertFalse(allowed)
-        self.assertEqual(message, "Voice note exceeds maximum allowed length.")
+
 
     def test_upgrade_to_premium(self):
         """Test upgrading a user to the 'premium' tier."""
