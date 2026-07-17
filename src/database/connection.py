@@ -5,21 +5,27 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sess
 from sqlalchemy.orm import declarative_base
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
-from config.settings import get_settings
 
-settings = get_settings()
+# Default database URL
+DEFAULT_DATABASE_URL = "sqlite+aiosqlite:///./vocalizebot.db"
+
+try:
+    from config import settings
+    DATABASE_URL = getattr(settings, 'DATABASE_URL', None) or DEFAULT_DATABASE_URL
+except ImportError:
+    DATABASE_URL = DEFAULT_DATABASE_URL
 
 # Create async engine
 engine_kwargs = {
-    "echo": settings.database_echo,
+    "echo": False,
     "future": True,
 }
-if settings.database_url and "sqlite" not in settings.database_url:
+if DATABASE_URL and "sqlite" not in DATABASE_URL:
     engine_kwargs["pool_pre_ping"] = True
     engine_kwargs["pool_size"] = 10
     engine_kwargs["max_overflow"] = 20
 
-engine = create_async_engine(settings.database_url, **engine_kwargs)
+engine = create_async_engine(DATABASE_URL, **engine_kwargs)
 
 # Create session factory
 async_session_factory = async_sessionmaker(
