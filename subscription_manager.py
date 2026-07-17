@@ -1,6 +1,6 @@
 """
 VocalizeBot - Subscription Manager
-Handles user tiers, transcription limits, and paywall logic.
+בוט שירות לקוחות ומכירות חכם - ניהול מנויים וחומת תשלומים
 """
 import os
 import sqlite3
@@ -8,34 +8,67 @@ from datetime import datetime, timedelta
 from typing import Optional, Tuple
 
 # Load from environment or use defaults
-FREE_MAX_TRANSCRIPTIONS = int(os.environ.get('FREE_MAX_TRANSCRIPTIONS', 3))
-FREE_MAX_VOICE_SECONDS = int(os.environ.get('FREE_MAX_VOICE_SECONDS', 30))
+FREE_MAX_LEADS = int(os.environ.get('FREE_MAX_LEADS', 30))  # לידים בחינם ליום
+FREE_MAX_RESPONSES = int(os.environ.get('FREE_MAX_RESPONSES', 50))  # תגובות בחינם ליום
+FREE_TRIAL_DAYS = int(os.environ.get('FREE_TRIAL_DAYS', 7))  # ימי ניסיון
 PREMIUM_PRICE_USD = os.environ.get('PREMIUM_PRICE_USD', '9.99')
 PAYPAL_LINK = os.environ.get('PAYPAL_UPGRADE_LINK', 'https://paypal.me/talhatil/premium')
 
-# Define user tiers
+# Define user tiers - מודל עסקי של שירות לקוחות
 USER_TIERS = {
-    "free": {"max_transcriptions": FREE_MAX_TRANSCRIPTIONS, "max_voice_length": FREE_MAX_VOICE_SECONDS, "custom_prompts": False},
-    "premium": {"max_transcriptions": float('inf'), "max_voice_length": 300, "custom_prompts": False},
-    "vip": {"max_transcriptions": float('inf'), "max_voice_length": float('inf'), "custom_prompts": True},
+    "free": {
+        "max_leads_per_day": FREE_MAX_LEADS, 
+        "max_responses_per_day": FREE_MAX_RESPONSES, 
+        "crm_integration": False,
+        "analytics": False,
+        "custom_branding": False,
+        "trial_days": 0
+    },
+    "starter": {
+        "max_leads_per_day": 100,
+        "max_responses_per_day": 200,
+        "crm_integration": True,
+        "analytics": False,
+        "custom_branding": False,
+        "trial_days": 0
+    },
+    "premium": {
+        "max_leads_per_day": 500,
+        "max_responses_per_day": 1000,
+        "crm_integration": True,
+        "analytics": True,
+        "custom_branding": False,
+        "trial_days": 14
+    },
+    "vip": {
+        "max_leads_per_day": float('inf'),
+        "max_responses_per_day": float('inf'),
+        "crm_integration": True,
+        "analytics": True,
+        "custom_branding": True,
+        "trial_days": 30
+    },
 }
 
 
 def get_upgrade_message(user_lang: str = 'he') -> str:
-    """Generate a paywall upgrade message with payment link."""
+    """Generate a paywall upgrade message for customer service bot."""
     if user_lang == 'he':
         return f"""
 🎉 *הגעת למכסה היומית שלך!*
 
 📊 *סיכום:*
-• הודעות קוליות שהותמללו: {FREE_MAX_TRANSCRIPTIONS}/{FREE_MAX_TRANSCRIPTIONS}
-• סיימת את המכסה החינמית שלך להיום! 🌙
+• לידים שטופלו: {FREE_MAX_LEADS}/{FREE_MAX_LEADS}
+• תגובות ללקוחות: {FREE_MAX_RESPONSES}/{FREE_MAX_RESPONSES}
+• סיימת את המכסה החינמית שלך! 🌙
 
 💎 *שדרג לפרימיום וקבל:*
-✅ תמלולים ללא הגבלה
-✅ הודעות קוליות ארוכות יותר
-✅ עדיפות בתור
-✅ תמיכה 24/7
+✅ לידים ללא הגבלה - תפספס פחות הזדמנויות
+✅ מענה אוטומטי 24/7 ללקוחות
+✅ אינטגרציה מלאה עם CRM
+✅ אנליטיקס מתקדם ודוחות מכירות
+✅ זיהוי לידים חמים אוטומטי
+✅ עדיפות בתור התמיכה
 
 💰 *מחיר: ${PREMIUM_PRICE_USD}/חודש*
 
@@ -48,14 +81,17 @@ def get_upgrade_message(user_lang: str = 'he') -> str:
 🎉 *You've reached your daily limit!*
 
 📊 *Summary:*
-• Transcriptions used: {FREE_MAX_TRANSCRIPTIONS}/{FREE_MAX_TRANSCRIPTIONS}
+• Leads processed: {FREE_MAX_LEADS}/{FREE_MAX_LEADS}
+• Customer responses: {FREE_MAX_RESPONSES}/{FREE_MAX_RESPONSES}
 • You've finished your free daily quota! 🌙
 
 💎 *Upgrade to Premium:*
-✅ Unlimited transcriptions
-✅ Longer voice messages
-✅ Priority queue
-✅ 24/7 support
+✅ Unlimited leads - never miss an opportunity
+✅ 24/7 automatic customer responses
+✅ Full CRM integration
+✅ Advanced analytics & sales reports
+✅ Automatic hot lead detection
+✅ Priority support queue
 
 💰 *Price: ${PREMIUM_PRICE_USD}/month*
 
@@ -65,25 +101,51 @@ Or send /upgrade to see options!
 """
 
 
-def get_voice_too_long_message(max_seconds: int, user_lang: str = 'he') -> str:
-    """Generate message when voice is too long for free tier."""
+def get_feature_locked_message(feature: str, user_lang: str = 'he') -> str:
+    """Generate message when a feature is locked for free tier."""
+    feature_messages_he = {
+        "crm": "אינטגרציה עם CRM",
+        "analytics": "דוחות אנליטיקס",
+        "custom_branding": "מיתוג מותאם אישית",
+        "hot_lead_detection": "זיהוי לידים חמים מתקדם"
+    }
+    
+    feature_messages_en = {
+        "crm": "CRM Integration",
+        "analytics": "Analytics Reports",
+        "custom_branding": "Custom Branding",
+        "hot_lead_detection": "Advanced Hot Lead Detection"
+    }
+    
     if user_lang == 'he':
         return f"""
-❌ *הודעה קולית ארוכה מדי!*
+🔒 *פיצ'ר זה זמין רק בפרימיום!*
 
-📊 *המגבלה שלך:* עד {max_seconds} שניות
-💎 *פתרון:* שדרג לפרימיום ללא הגבלה!
+📊 *הפיצ'ר:* {feature_messages_he.get(feature, feature)}
 
-[🔗 שדרג עכשיו]({PAYPAL_LINK})
+💎 *שדרג לפרימיום וקבל:*
+✅ גישה לכל הפיצ'רים המתקדמים
+✅ לידים ללא הגבלה
+✅ תמיכה 24/7
+
+💰 *מחיר: ${PREMIUM_PRICE_USD}/חודש*
+
+🔗 [לשדרוג עכשיו]({PAYPAL_LINK})
 """
     else:
         return f"""
-❌ *Voice message too long!*
+🔒 *This feature is available only in Premium!*
 
-📊 *Your limit:* Up to {max_seconds} seconds
-💎 *Solution:* Upgrade to premium for unlimited!
+📊 *Feature:* {feature_messages_en.get(feature, feature)}
 
-[🔗 Upgrade Now]({PAYPAL_LINK})
+💎 *Upgrade to Premium:*
+✅ Access to all advanced features
+✅ Unlimited leads
+✅ 24/7 support
+
+💰 *Price: ${PREMIUM_PRICE_USD}/month*
+
+🔗 [Upgrade Now]({PAYPAL_LINK})
 """
 
 
