@@ -23,10 +23,24 @@ class LeadStatus(str, Enum):
     NEW = "new"
     CONTACTED = "contacted"
     INTERESTED = "interested"
+    HOT_LEAD = "hot_lead"  # 🔥 High purchase intent - notify admin immediately
     PROPOSAL = "proposal"
     NEGOTIATION = "negotiation"
     CLOSED_WON = "closed_won"
     CLOSED_LOST = "closed_lost"
+
+
+# Hebrew translations for display
+LEAD_STATUS_DISPLAY = {
+    LeadStatus.NEW: "מתעניין חדש",
+    LeadStatus.CONTACTED: "בטיפול",
+    LeadStatus.INTERESTED: "מתעניין",
+    LeadStatus.HOT_LEAD: "🔥 ליד חם",
+    LeadStatus.PROPOSAL: "הצעת מחיר נשלחה",
+    LeadStatus.NEGOTIATION: "במשא ומתן",
+    LeadStatus.CLOSED_WON: "✅ נסגר בהצלחה",
+    LeadStatus.CLOSED_LOST: "❌ לא נסגר"
+}
 
 
 class MessageDirection(str, Enum):
