@@ -21,10 +21,18 @@ import sys
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from src.database.connection import get_db_context
-from src.database.models import Customer, Message, PaymentLink, Interaction
+from src.database.connection import get_db_context, init_db
+from src.database.models import Customer, Message, PaymentLink, Interaction, Base
 from src.agents.prompts import SYSTEM_PROMPT
 from sqlalchemy import select, func
+
+# Initialize database tables on startup
+async def init_database():
+    """Initialize the database tables."""
+    from src.database.connection import engine
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    logger.info("Database tables initialized")
 
 # ============================================================================
 # LIVE LOGS MANAGER
@@ -129,6 +137,8 @@ class DashboardStats(BaseModel):
 async def lifespan(app: FastAPI):
     """Application lifespan handler."""
     logger.info("Starting Vocalize Admin Dashboard Server...")
+    # Initialize database tables
+    await init_database()
     logs_manager.add_log("info", "Dashboard server started", "system")
     yield
     logger.info("Shutting down Vocalize Admin Dashboard Server...")
