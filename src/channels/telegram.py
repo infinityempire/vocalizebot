@@ -6,9 +6,11 @@ Handles all Telegram-specific functionality including:
 - Text message processing
 - User session management
 - Command handling
+- Hot lead detection and notification
 """
 
 import asyncio
+from datetime import datetime
 from typing import Optional, Callable, Dict, Any
 from loguru import logger
 
@@ -26,7 +28,8 @@ from src.config import settings
 from src.models import MessageType, BotResponse
 from src.services.transcription import get_transcription_service, TranscriptionError
 from src.services.summarization import generate_summary
-from subscription_manager import SubscriptionManager # NEW: Import SubscriptionManager
+from src.services.customer_service import get_customer_service_agent
+from subscription_manager import SubscriptionManager
 
 
 # Conversation states
@@ -370,18 +373,53 @@ class TelegramBot:
     # =========================================================================
     
     async def _handle_text_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        """Handle incoming text messages."""
+        """Handle incoming text messages with customer service logic."""
         user_id = update.effective_user.id
         text = update.message.text
+        chat_id = update.effective_chat.id
         
         logger.info(f"Text message from user {user_id}: {text[:50]}...")
         
-        # Echo with confirmation (placeholder for AI response)
-        await update.message.reply_text(
-            f"📨 הודעתך התקבלה: {text[:100]}...\n\n"
-            "שלח הודעה קולית לתמלול."
-        )
+        # Get customer info for notification
+        user = update.effective_user
+        customer_info = {
+            'name': user.full_name,
+            'username': user.username,
+            'phone': None  # Would need to be fetched from conversation
+        }
         
+        # Analyze message with Customer Service Agent
+        cs_agent = get_customer_service_agent()
+        analysis = cs_agent.analyze_and_respond(text, customer_info)
+        
+        # Send response to user
+        await update.message.reply_text(analysis['response'], parse_mode="Markdown")
+        
+        # If hot lead detected, notify admin
+        if analysis['should_notify_admin'] and settings.telegram_admin_chat_id:
+            customer_name = f"@{user.username}" if user.username else user.full_name
+            score = int(50 + analysis['confidence'] * 50)
+            
+            notification = cs_agent.format_hot_lead_notification(
+                customer_name=customer_name,
+                phone=str(user_id),
+                message=text,
+                score=score
+            )
+            
+            try:
+                import requests
+                url = f"https://api.telegram.org/bot{self.token}/sendMessage"
+                requests.post(url, json={
+                    "chat_id": settings.telegram_admin_chat_id,
+                    "text": notification,
+                    "parse_mode": "Markdown"
+                })
+                logger.info(f"Hot lead notification sent for user {user_id}")
+            except Exception as e:
+                logger.error(f"Failed to send hot lead notification: {e}")
+        
+        # Update user context
         self._update_user_context(user_id, last_message=text)
     
     # =========================================================================
@@ -480,3 +518,61 @@ async def start_telegram_bot(subscription_manager: Optional[SubscriptionManager]
     bot = get_telegram_bot(subscription_manager=subscription_manager) # Pass manager to get_telegram_bot
     await bot.start()
     return bot
+
+
+# =============================================================================
+# HOT LEAD NOTIFICATION SYSTEM
+# =============================================================================
+
+async def notify_admin_of_hot_lead(
+    bot_token: str,
+    admin_chat_id: str,
+    customer_name: str,
+    customer_id: str,
+    message: str,
+    score: int
+) -> bool:
+    """
+    Send hot lead notification to admin channel.
+    
+    Args:
+        bot_token: Telegram bot token
+        admin_chat_id: Admin's Telegram chat ID
+        customer_name: Customer's name/username
+        customer_id: Customer's Telegram ID
+        message: The message that triggered hot lead detection
+        score: Lead score (0-100)
+        
+    Returns:
+        True if notification sent successfully
+    """
+    try:
+        import requests
+        
+        notification = f"""
+🔥 *ליד חם חדש!*
+
+👤 *לקוח:* {customer_name}
+🆔 ID: `{customer_id}`
+📊 ציון: {score}/100
+
+💬 *הודעה:*
+{message[:200]}...
+
+⏰ זמן: {datetime.now().strftime('%d/%m/%Y %H:%M')}
+
+📋 [פתח לינק לדשבורד]
+"""
+        
+        url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+        response = requests.post(url, json={
+            "chat_id": admin_chat_id,
+            "text": notification,
+            "parse_mode": "Markdown"
+        })
+        
+        return response.status_code == 200 and response.json().get("ok", False)
+        
+    except Exception as e:
+        logger.error(f"Failed to send hot lead notification: {e}")
+        return False

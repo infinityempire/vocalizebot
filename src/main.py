@@ -3,12 +3,14 @@ VocalizeBot - Main Application Entry Point
 Open Hands Agent | Tal HaTil Empire
 """
 import asyncio
+import sqlite3
+import sys
 from contextlib import asynccontextmanager
+from pathlib import Path
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from loguru import logger
-import sys
 
 from config.settings import get_settings
 from src.database.connection import init_db, close_db
@@ -398,6 +400,242 @@ async def close_deal(customer_id: str, request: Request):
     except Exception as e:
         logger.error(f"Error closing deal: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# =============================================================================
+# 📢 BROADCAST SYSTEM - Admin endpoints for mass messaging
+# =============================================================================
+
+@app.post("/api/broadcast/send")
+async def broadcast_message(request: Request):
+    """
+    Send a broadcast message to all users via Telegram.
+    
+    Requires ADMIN_DASHBOARD_TOKEN in Authorization header.
+    
+    Body:
+        message: str - The message to send (supports Markdown)
+        target: str - "all" or "premium" (default: "all")
+    """
+    from config.settings import get_settings
+    
+    # Verify admin token
+    settings = get_settings()
+    auth_header = request.headers.get("Authorization", "")
+    expected_token = f"Bearer {settings.admin_dashboard_token}"
+    
+    if auth_header != expected_token:
+        raise HTTPException(status_code=401, detail="Unauthorized - Invalid admin token")
+    
+    try:
+        body = await request.json()
+        message = body.get("message", "").strip()
+        target = body.get("target", "all")  # "all" or "premium"
+        
+        if not message:
+            raise HTTPException(status_code=400, detail="Message cannot be empty")
+        
+        # Import subscription manager and telegram bot
+        sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+        from subscription_manager import SubscriptionManager
+        
+        # Get users to send to
+        sub_manager = SubscriptionManager()
+        
+        if target == "premium":
+            user_ids = sub_manager.get_premium_users()
+        else:
+            user_ids = sub_manager.get_all_users()
+        
+        if not user_ids:
+            return {
+                "success": True,
+                "sent": 0,
+                "message": "No users to send to"
+            }
+        
+        # Send via Telegram
+        sent_count = 0
+        failed_count = 0
+        
+        try:
+            import requests
+            
+            for user_id in user_ids:
+                try:
+                    # Escape markdown for Telegram
+                    escaped_message = message.replace("_", "\\_").replace("*", "\\*").replace("[", "\\[")
+                    
+                    url = f"https://api.telegram.org/bot{settings.telegram_bot_token}/sendMessage"
+                    payload = {
+                        "chat_id": user_id,
+                        "text": escaped_message,
+                        "parse_mode": "MarkdownV2"
+                    }
+                    
+                    response = requests.post(url, json=payload, timeout=10)
+                    
+                    if response.status_code == 200 and response.json().get("ok"):
+                        sent_count += 1
+                    else:
+                        failed_count += 1
+                        logger.warning(f"Failed to send to {user_id}: {response.text[:100]}")
+                        
+                except Exception as e:
+                    failed_count += 1
+                    logger.error(f"Error sending to {user_id}: {e}")
+            
+        except ImportError:
+            logger.error("requests library not available for Telegram API calls")
+        
+        logger.info(f"Broadcast completed: {sent_count} sent, {failed_count} failed")
+        
+        return {
+            "success": True,
+            "sent": sent_count,
+            "failed": failed_count,
+            "total_users": len(user_ids),
+            "target": target
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Broadcast error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/broadcast/stats")
+async def broadcast_stats(request: Request):
+    """Get broadcast statistics."""
+    from config.settings import get_settings
+    
+    # Verify admin token
+    settings = get_settings()
+    auth_header = request.headers.get("Authorization", "")
+    expected_token = f"Bearer {settings.admin_dashboard_token}"
+    
+    if auth_header != expected_token:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    
+    sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+    from subscription_manager import SubscriptionManager
+    
+    sub_manager = SubscriptionManager()
+    all_users = sub_manager.get_all_users()
+    premium_users = sub_manager.get_premium_users()
+    
+    return {
+        "total_users": len(all_users),
+        "premium_users": len(premium_users),
+        "free_users": len(all_users) - len(premium_users)
+    }
+
+
+# =============================================================================
+# 🏠 ADMIN DASHBOARD API
+# =============================================================================
+
+@app.get("/api/admin/stats")
+async def admin_stats(request: Request):
+    """Get comprehensive admin statistics."""
+    from config.settings import get_settings
+    
+    # Verify admin token
+    settings = get_settings()
+    auth_header = request.headers.get("Authorization", "")
+    expected_token = f"Bearer {settings.admin_dashboard_token}"
+    
+    if auth_header != expected_token:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    
+    sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+    from subscription_manager import SubscriptionManager
+    
+    sub_manager = SubscriptionManager()
+    all_users = sub_manager.get_all_users()
+    premium_users = sub_manager.get_premium_users()
+    
+    # Get database stats
+    try:
+        from src.database.connection import get_db_context
+        from sqlalchemy import select, func
+        from src.database.models import Customer
+        
+        async with get_db_context() as session:
+            total_customers = await session.scalar(select(func.count(Customer.id)))
+    except Exception:
+        total_customers = 0
+    
+    return {
+        "bot_users": {
+            "total": len(all_users),
+            "premium": len(premium_users),
+            "free": len(all_users) - len(premium_users)
+        },
+        "database_customers": total_customers,
+        "tier_distribution": {
+            "free": len(all_users) - len(premium_users),
+            "premium": len(premium_users)
+        }
+    }
+
+
+@app.get("/api/admin/users")
+async def admin_list_users(
+    request: Request,
+    limit: int = 50,
+    offset: int = 0
+):
+    """List all users with their subscription status."""
+    from config.settings import get_settings
+    
+    # Verify admin token
+    settings = get_settings()
+    auth_header = request.headers.get("Authorization", "")
+    expected_token = f"Bearer {settings.admin_dashboard_token}"
+    
+    if auth_header != expected_token:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    
+    sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+    from subscription_manager import SubscriptionManager
+    
+    sub_manager = SubscriptionManager()
+    
+    with sqlite3.connect(sub_manager.db_path) as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT user_id, tier, daily_transcriptions, total_transcriptions, 
+                   tier_expiration, created_at
+            FROM users
+            ORDER BY created_at DESC
+            LIMIT ? OFFSET ?
+        ''', (limit, offset))
+        
+        rows = cursor.fetchall()
+        
+        cursor.execute('SELECT COUNT(*) FROM users')
+        total = cursor.fetchone()[0]
+    
+    users = [
+        {
+            "user_id": row[0],
+            "tier": row[1],
+            "daily_transcriptions": row[2],
+            "total_transcriptions": row[3],
+            "tier_expiration": row[4],
+            "created_at": row[5]
+        }
+        for row in rows
+    ]
+    
+    return {
+        "users": users,
+        "total": total,
+        "limit": limit,
+        "offset": offset
+    }
 
 
 @app.get("/api/sales/{customer_id}/summary")
