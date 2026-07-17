@@ -1,261 +1,358 @@
-# VocalizeBot
+# VocalizeBot 🇮🇱
 
 <div align="center">
   <img src="https://img.shields.io/badge/Python-3.11+-blue.svg" alt="Python">
   <img src="https://img.shields.io/badge/FastAPI-0.109-green.svg" alt="FastAPI">
   <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License">
-  <img src="https://img.shields.io/badge/WhatsApp-Integration-green.svg" alt="WhatsApp">
-  <img src="https://img.shields.io/badge/Instagram-Integration-E4405F.svg" alt="Instagram">
+  <img src="https://img.shields.io/badge/Telegram-Bot-blue.svg" alt="Telegram">
+  <img src="https://img.shields.io/badge/Google-AI/Gemini-red.svg" alt="Google AI">
 </div>
 
-**VocalizeBot** is an advanced AI-powered customer management, sales coordination, and business operations agent operating over WhatsApp and Instagram. Built with modern AI technologies, it provides intelligent customer interactions, lead qualification, and seamless payment processing.
+**VocalizeBot** is an AI-powered Telegram bot that transcribes voice messages into text in seconds. Perfect for Hebrew-speaking users who receive endless voice notes! Built with Google AI (Gemini), it provides fast, accurate transcriptions with a freemium subscription model.
+
+🎯 **Try it now**: [@replyq1_bot](https://t.me/replyq1_bot)
+
+---
 
 ## 🚀 Features
 
-### Multi-Channel Integration
-- **WhatsApp Integration**: Receive and process text messages, media, and voice notes via Twilio
-- **Instagram Integration**: Handle DMs, media, and voice messages via Instagram Graph API
-- **Voice Note Transcription**: Automatic audio-to-text conversion using OpenAI Whisper
+### 🎙️ Voice Transcription
+- **Instant Transcription**: Convert voice messages to text in under 2 seconds
+- **Hebrew Support**: Optimized for Hebrew with excellent accuracy
+- **Group Support**: Auto-transcribe voice messages in Telegram groups
+- **Multi-format Support**: Works with OGG, MP3, WAV, and other audio formats
 
-### Omni-Intent AI Engine
-- **Intelligent Intent Classification**: Understand customer messages and detect their intent
-- **Lead Qualification & Scoring**: Dynamic scoring based on engagement and sales signals
-- **Customer Segmentation**: Differentiate behavior between B2B, B2C, and existing customers
-- **Blackout Fallback Guard**: Safety mechanism that routes confused AI responses to human agents
+### 💳 Subscription Tiers
+| Feature | Free | Premium |
+|---------|------|---------|
+| Daily Transcriptions | 3 | Unlimited |
+| Max Voice Length | 30s | 5min |
+| Group Transcription | ✅ | ✅ |
+| Priority Support | ❌ | ✅ |
 
-### Sales Automation
-- **Sales Coordination**: Guide customers through the buying journey
-- **Objection Handling**: Professionally address and overcome customer concerns
-- **Payment Integration**: Generate Stripe payment links and track payment status
-- **Deal Closing**: Direct sales closing in chat with smart recommendations
+### 📊 Admin Dashboard
+- **User Management**: View and manage all users
+- **Broadcast System**: Send messages to all users or premium only
+- **Statistics**: Track usage, conversions, and revenue
+- **Subscription Management**: Manual upgrades and refunds
 
-### Business Operations
-- **Customer Management**: Track customer profiles, interactions, and history
-- **Complaint Handling**: Automated complaint flows with escalation protocols
-- **Follow-up Management**: Automated reminders and re-engagement campaigns
-- **Business Analytics**: Pipeline views and sales performance metrics
+---
+
+## 📱 Termux Setup Guide
+
+### Step 1: Install Termux Dependencies
+
+```bash
+# Update package list
+pkg update && pkg upgrade -y
+
+# Install Python and required tools
+pkg install python python-dev libjpeg-turbo-dev zlib-dev freetype-dev
+
+# Install git and openssl
+pkg install git openssl
+
+# Upgrade pip
+pip install --upgrade pip
+```
+
+### Step 2: Clone and Setup
+
+```bash
+# Navigate to your storage
+cd /sdcard/VocalizeBot
+
+# Or clone from GitHub
+git clone https://github.com/infinityempire/vocalizebot.git
+cd vocalizebot
+
+# Make scripts executable
+chmod +x check_setup.py
+```
+
+### Step 3: Configure Environment
+
+```bash
+# Copy the example environment file
+cp .env.example .env
+
+# Edit with your favorite editor (nano/vim)
+nano .env
+```
+
+**Required variables to configure:**
+```bash
+# Telegram Bot Token (from @BotFather)
+TELEGRAM_BOT_TOKEN=123456789:ABCdefGHIjklMNOpqrsTUVwxyz
+
+# Google AI API Key (from https://aistudio.google.com/app/apikey)
+GOOGLE_AI_API_KEY=AIzaSy...
+
+# Admin Dashboard Token (generate with: python3 -c "import secrets; print(secrets.token_urlsafe(32))")
+ADMIN_DASHBOARD_TOKEN=your_secure_token_here
+
+# PayPal (for premium subscriptions)
+PAYPAL_CLIENT_ID=your_paypal_client_id
+PAYPAL_CLIENT_SECRET=your_paypal_secret
+PAYPAL_UPGRADE_LINK=https://paypal.me/talhatil/premium
+```
+
+### Step 4: Install Python Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### Step 5: Run Self-Diagnostics
+
+```bash
+python3 check_setup.py
+```
+
+This will verify:
+- ✅ Environment variables are configured
+- ✅ Python version is correct
+- ✅ All dependencies are installed
+- ✅ Network connectivity to Telegram & Google AI
+- ✅ Dashboard port availability
+
+### Step 6: Start the Bot
+
+**Option A: Run in Foreground (for testing)**
+```bash
+python3 src/main.py
+```
+
+**Option B: Run in Background (recommended for production)**
+
+```bash
+# Start the bot in background with nohup
+nohup python3 src/main.py > bot.log 2>&1 &
+
+# Check if running
+ps aux | grep python
+
+# View logs
+tail -f bot.log
+```
+
+**Option C: Run Bot and Dashboard Separately**
+
+```bash
+# Terminal 1: Run the Telegram Bot (polling mode)
+python3 -c "
+import asyncio
+from src.channels.telegram import start_telegram_bot
+from subscription_manager import SubscriptionManager
+
+async def main():
+    sub_manager = SubscriptionManager()
+    bot = await start_telegram_bot(sub_manager)
+    while True:
+        await asyncio.sleep(3600)
+
+asyncio.run(main())
+"
+
+# Terminal 2: Run the Dashboard (FastAPI on port 8000)
+python3 -m uvicorn src.main:app --host 0.0.0.0 --port 8000
+
+# Or in background:
+nohup python3 -m uvicorn src.main:app --host 0.0.0.0 --port 8000 > dashboard.log 2>&1 &
+```
+
+### Step 7: Verify Bot is Running
+
+```bash
+# Check bot status
+curl http://localhost:8000/health
+
+# Check bot info
+curl http://localhost:8000/
+
+# View bot logs
+tail -f bot.log
+```
+
+---
+
+## 🖥️ Admin Dashboard API
+
+### Authentication
+All admin endpoints require the `ADMIN_DASHBOARD_TOKEN` in the Authorization header:
+```
+Authorization: Bearer YOUR_ADMIN_DASHBOARD_TOKEN
+```
+
+### Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/admin/stats` | GET | Get dashboard statistics |
+| `/api/admin/users` | GET | List all users (with pagination) |
+| `/api/broadcast/send` | POST | Send broadcast to users |
+| `/api/broadcast/stats` | GET | Get user counts |
+
+### Broadcast Example
+
+```bash
+# Send message to all users
+curl -X POST http://localhost:8000/api/broadcast/send \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"message": "🎉 Special offer! Premium 50% off today!", "target": "all"}'
+
+# Send to premium users only
+curl -X POST http://localhost:8000/api/broadcast/send \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Thank you for being premium! 🎁", "target": "premium"}'
+```
+
+---
+
+## 💰 Payment & Subscription
+
+### Free Tier
+- 3 transcriptions per day
+- Voice messages up to 30 seconds
+- Basic support
+
+### Premium Tier
+- Unlimited transcriptions
+- Voice messages up to 5 minutes
+- Priority support
+- Monthly subscription via PayPal
+
+### Upgrade Flow
+1. User hits daily limit
+2. Bot sends upgrade message with PayPal link
+3. User pays via PayPal
+4. Admin manually upgrades user via API or database
+
+```python
+# Manual upgrade via Python
+from subscription_manager import SubscriptionManager
+
+sub_manager = SubscriptionManager()
+sub_manager.upgrade_tier("USER_ID", "premium", duration_days=30)
+```
+
+---
+
+## 🔧 Configuration Reference
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `TELEGRAM_BOT_TOKEN` | Telegram bot token from @BotFather | ✅ |
+| `GOOGLE_AI_API_KEY` | Google AI Studio API key | ✅ |
+| `ADMIN_DASHBOARD_TOKEN` | Secure token for admin API | ✅ |
+| `PAYPAL_CLIENT_ID` | PayPal sandbox/live client ID | For payments |
+| `PAYPAL_CLIENT_SECRET` | PayPal sandbox/live secret | For payments |
+| `PAYPAL_UPGRADE_LINK` | PayPal.me link for upgrades | ✅ |
+| `FREE_MAX_TRANSCRIPTIONS` | Daily free transcription limit | Default: 3 |
+| `FREE_MAX_VOICE_SECONDS` | Max voice length for free users | Default: 30 |
+| `PORT` | Dashboard server port | Default: 8000 |
+
+---
 
 ## 📁 Project Structure
 
 ```
 vocalizebot/
-├── config/                  # Configuration files
-│   ├── settings.py         # Application settings (Pydantic)
-│   └── __init__.py
+├── config/
+│   └── settings.py         # Application settings (Pydantic)
 ├── src/
-│   ├── agents/             # AI Agent logic
-│   │   ├── core.py         # Main AI agent implementation
-│   │   ├── prompts.py      # System prompts & templates
-│   │   └── __init__.py
-│   ├── channels/           # Channel integrations
-│   │   ├── whatsapp.py     # WhatsApp (Twilio) webhook
-│   │   ├── instagram.py    # Instagram webhook
-│   │   └── __init__.py
-│   ├── services/           # Business services
-│   │   ├── transcription.py  # Whisper voice transcription
-│   │   ├── payment.py      # Stripe payment integration
-│   │   ├── sales.py        # Sales coordination
-│   │   └── __init__.py
-│   ├── database/           # Database models & connection
+│   ├── channels/
+│   │   └── telegram.py     # Telegram bot handler
+│   ├── services/
+│   │   ├── payment.py      # PayPal integration
+│   │   └── transcription.py # Google AI transcription
+│   ├── database/
 │   │   ├── models.py       # SQLAlchemy models
-│   │   ├── connection.py   # Database connection
-│   │   └── __init__.py
+│   │   └── connection.py   # Database connection
 │   └── main.py             # FastAPI application
-├── tests/                  # Unit tests
-│   └── __init__.py
-├── main.py                 # Application entry point
-├── requirements.txt        # Dependencies
-├── .env.example            # Environment variables template
-├── .gitignore
-└── README.md
+├── subscription_manager.py  # User tiers & paywall
+├── check_setup.py          # Self-diagnostic script
+├── .env.example            # Environment template
+└── requirements.txt        # Dependencies
 ```
 
-## 🛠️ Installation
-
-### Prerequisites
-
-- Python 3.11+
-- Twilio account (for WhatsApp)
-- Instagram Business Account (for Instagram)
-- OpenAI API key (for AI and Whisper)
-- Stripe account (for payments)
-
-### Setup
-
-1. **Clone the repository**
-```bash
-git clone https://github.com/yourusername/vocalizebot.git
-cd vocalizebot
-```
-
-2. **Create virtual environment**
-```bash
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# or
-.\venv\Scripts\activate  # Windows
-```
-
-3. **Install dependencies**
-```bash
-pip install -r requirements.txt
-```
-
-4. **Configure environment variables**
-```bash
-cp .env.example .env
-# Edit .env with your API keys and configuration
-```
-
-5. **Initialize database**
-```bash
-# The database is automatically created on first run
-# Or run manually:
-python -c "import asyncio; from src.database.connection import init_db; asyncio.run(init_db())"
-```
-
-6. **Run the application**
-```bash
-python main.py
-# Or with uvicorn directly:
-uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
-```
-
-## 🔌 API Endpoints
-
-### Webhooks
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/webhook/whatsapp/webhook` | GET/POST | WhatsApp webhook (Twilio) |
-| `/webhook/instagram/webhook` | GET/POST | Instagram webhook |
-| `/webhook/stripe` | POST | Stripe payment webhook |
-
-### REST API
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/customers` | GET | List all customers |
-| `/api/customers/{id}` | GET | Get customer details |
-| `/api/customers/{id}` | PATCH | Update customer |
-| `/api/pipeline` | GET | Get sales pipeline |
-| `/api/payments/create-link` | POST | Create payment link |
-| `/api/sales/{id}/close` | POST | Close a deal |
-| `/api/sales/{id}/summary` | GET | Customer sales summary |
-
-### Health & Info
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/` | GET | Application info |
-| `/health` | GET | Health check |
-
-## 📱 Setup Guides
-
-### WhatsApp (Twilio)
-1. Create a Twilio account
-2. Get your Account SID and Auth Token
-3. Configure WhatsApp sandbox or business account
-4. Set webhook URL: `https://your-domain.com/webhook/whatsapp/webhook`
-5. Add credentials to `.env`
-
-### Instagram
-1. Create an Instagram Business/Creator account
-2. Set up Meta App with Instagram Graph API
-3. Configure Webhook URL: `https://your-domain.com/webhook/instagram/webhook`
-4. Add credentials to `.env`
-
-### OpenAI
-1. Get your API key from [OpenAI](https://platform.openai.com/)
-2. Add to `.env` as `OPENAI_API_KEY`
-
-### Stripe
-1. Create a Stripe account
-2. Get your API keys
-3. Configure webhook endpoint: `https://your-domain.com/webhook/stripe`
-4. Add credentials to `.env`
-
-## 🔧 Configuration
-
-### Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `OPENAI_API_KEY` | OpenAI API key | Required |
-| `ANTHROPIC_API_KEY` | Anthropic API key | Optional |
-| `DEFAULT_AI_PROVIDER` | AI provider to use | `openai` |
-| `AI_MODEL` | Model to use | `gpt-4-turbo-preview` |
-| `TWILIO_ACCOUNT_SID` | Twilio Account SID | Required for WhatsApp |
-| `TWILIO_AUTH_TOKEN` | Twilio Auth Token | Required for WhatsApp |
-| `STRIPE_API_KEY` | Stripe API key | Required for payments |
-| `DATABASE_URL` | Database connection string | `sqlite+aiosqlite:///./vocalizebot.db` |
-| `BLACKOUT_MODE_THRESHOLD` | Errors before escalation | `3` |
-
-### Customer Segments
-
-The AI agent automatically detects customer segments:
-
-- **B2B (Business)**: Professional tone, ROI focus, bulk pricing
-- **B2C (Consumer)**: Friendly tone, personal benefits
-- **Existing Customer**: Loyalty focus, upsell opportunities
-
-### Lead Scoring
-
-Customers are scored 0-100 based on:
-- Message engagement
-- Purchase intent signals
-- Objection handling
-- Payment completion
+---
 
 ## 🧪 Testing
 
 ```bash
-# Run all tests
-pytest
+# Run diagnostics
+python3 check_setup.py
 
-# Run with coverage
-pytest --cov=src --cov-report=html
+# Run unit tests
+pytest tests/
 
-# Run specific test file
-pytest tests/test_agents.py -v
+# Test Telegram bot locally
+python3 -c "
+from src.channels.telegram import TelegramBot
+from subscription_manager import SubscriptionManager
+sub = SubscriptionManager()
+bot = TelegramBot(subscription_manager=sub)
+print('Bot initialized successfully!')
+"
 ```
+
+---
 
 ## 🚢 Deployment
 
+### Termux (Android)
+See [📱 Termux Setup Guide](#📱-termux-setup-guide) above.
+
+### VPS/Server
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Run with systemd (example)
+sudo tee /etc/systemd/system/vocalizebot.service > /dev/null <<EOF
+[Unit]
+Description=VocalizeBot Service
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/opt/vocalizebot
+ExecStart=/usr/bin/python3 /opt/vocalizebot/src/main.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl enable vocalizebot
+sudo systemctl start vocalizebot
+```
+
 ### Docker
-
-```dockerfile
-FROM python:3.11-slim
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-COPY . .
-CMD ["python", "main.py"]
+```bash
+docker build -t vocalizebot .
+docker run -d \
+  --name vocalizebot \
+  -p 8000:8000 \
+  --env-file .env \
+  vocalizebot
 ```
 
-### Docker Compose
-
-```yaml
-version: '3.8'
-services:
-  vocalizebot:
-    build: .
-    ports:
-      - "8000:8000"
-    env_file:
-      - .env
-    depends_on:
-      - redis
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-```
+---
 
 ## 🔒 Security
 
-- All API keys stored in environment variables
-- Webhook signature verification (Twilio, Instagram, Stripe)
-- Rate limiting enabled by default
-- CORS configuration for REST API
-- Database encryption (with proper configuration)
+- Never commit `.env` to version control
+- Use strong tokens for `ADMIN_DASHBOARD_TOKEN`
+- Enable HTTPS in production
+- Rate limiting is enabled by default
+- CORS is configured (use `ALLOWED_ORIGINS` in production)
+
+---
 
 ## 🤝 Contributing
 
@@ -265,21 +362,16 @@ services:
 4. Push to branch: `git push origin feature/amazing-feature`
 5. Open a Pull Request
 
+---
+
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- Built with [FastAPI](https://fastapi.tiangolo.com/)
-- AI powered by [OpenAI](https://openai.com/)
-- WhatsApp integration via [Twilio](https://www.twilio.com/)
-- Instagram integration via [Meta Graph API](https://developers.facebook.com/docs/instagram-api/)
-- Payments by [Stripe](https://stripe.com/)
+MIT License - Built with ❤️ by [Tal HaTil Empire](https://github.com/infinityempire)
 
 ---
 
 <div align="center">
-  <p>Built with ❤️ by <a href="https://github.com/yourusername">Your Name</a></p>
-  <p>VocalizeBot - Advanced Customer Management & Sales</p>
+  <p>🎙️ VocalizeBot - Stop drowning in voice messages!</p>
+  <p>Try it now: <a href="https://t.me/replyq1_bot">@replyq1_bot</a></p>
 </div>
+
