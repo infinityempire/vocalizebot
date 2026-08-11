@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Missed-Call Text-Back Bot | Stop Losing Jobs to Missed Calls</title>
-<meta name="description" content="Every missed call while you're on a job is a customer calling your competitor. Auto text-back in 3 seconds. Pilot pricing for solo operators.">
+<title>בוט החזרת שיחות שלא נענו | תפסיקו לאבד עבודות בגלל שיחות שלא נענו</title>
+<meta name="description" content="כל שיחה שלא נענית כשאתם על עבודה היא לקוח שמתקשר למתחרה. החזרת SMS אוטומטית תוך 3 שניות. מחיר פיילוט לעצמאים.">
 <style>
   :root{
     --bg:#0b0f14; --bg2:#11171f; --card:#161e28; --card2:#1c2632;
@@ -13,7 +13,7 @@
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html{scroll-behavior:smooth}
-  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--txt);line-height:1.6}
+  body{font-family:"Segoe UI",Arial,"Heebo",Roboto,sans-serif;background:var(--bg);color:var(--txt);line-height:1.7}
   a{color:inherit;text-decoration:none}
   .wrap{max-width:880px;margin:0 auto;padding:0 20px}
   section{padding:64px 0;border-bottom:1px solid var(--line)}
@@ -26,7 +26,6 @@
   .hook{color:var(--acc)}
   .center{text-align:center}
 
-  /* hero */
   .hero{padding:80px 0 56px;text-align:center;background:radial-gradient(60% 60% at 50% 0%,rgba(34,197,94,.12),transparent 70%)}
   .pill{display:inline-block;padding:6px 14px;border:1px solid var(--line);border-radius:999px;font-size:13px;color:var(--mut);margin-bottom:20px}
   .hero .cta{margin-top:30px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
@@ -37,25 +36,21 @@
   .btn-ghost{background:transparent;border-color:var(--line);color:var(--txt)}
   .btn-ghost:hover{background:var(--card2)}
 
-  /* stat band */
   .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:40px}
   .stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;text-align:center}
   .stat .n{font-size:28px;font-weight:800;color:var(--acc)}
   .stat .l{font-size:13px;color:var(--mut);margin-top:4px}
 
-  /* problem */
   .problem ul{list-style:none;margin-top:18px;display:grid;gap:14px}
   .problem li{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;display:flex;gap:14px;align-items:flex-start}
   .problem .x{color:var(--danger);font-weight:800;font-size:20px;line-height:1.4}
 
-  /* solution */
   .steps{display:grid;gap:16px;margin-top:22px}
   .step{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px}
   .step .num{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;background:var(--acc);color:#06140a;font-weight:800;margin-bottom:12px}
-  .step .demo{margin-top:14px;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:14px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;color:var(--mut)}
+  .step .demo{margin-top:14px;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:14px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;color:var(--mut);direction:rtl}
   .step .demo .you{color:var(--acc)}
 
-  /* ROI calculator */
   #roi .calc{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:26px;margin-top:18px}
   .calc .row{margin-bottom:20px}
   .calc label{display:flex;justify-content:space-between;font-size:14px;color:var(--mut);margin-bottom:8px}
@@ -69,7 +64,6 @@
   .calc .out .o.save .big{color:var(--acc)}
   .calc .note{margin-top:16px;font-size:13px;color:var(--mut);text-align:center}
 
-  /* pricing */
   .pricing .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:22px}
   .plan{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px}
   .plan.feat{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc) inset}
@@ -79,12 +73,10 @@
   .plan li::before{content:"✓ ";color:var(--acc)}
   .plan .btn{width:100%;justify-content:center}
 
-  /* faq */
   .faq details{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin-bottom:10px}
   .faq summary{cursor:pointer;font-weight:600}
   .faq p{margin-top:10px;font-size:15px}
 
-  /* final cta */
   .final{text-align:center}
   .final .cta{margin-top:22px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
   footer{padding:30px 0;text-align:center;color:var(--mut);font-size:13px}
@@ -98,56 +90,56 @@
 
 <header class="hero">
   <div class="wrap">
-    <span class="pill">For solo trades &amp; field-service operators</span>
-    <h1>Stop losing jobs to <span class="hook">missed calls</span> while you're on a job.</h1>
-    <p class="lead">Every unanswered ring is a customer calling your competitor. When you can't pick up, your business number auto-replies by text in 3 seconds &mdash; so the lead stays yours.</p>
+    <span class="pill">לעצמאים ובעלי מקצוע בשטח</span>
+    <h1>תפסיקו לאבד עבודות בגלל <span class="hook">שיחות שלא נענו</span> כשאתם על עבודה.</h1>
+    <p class="lead">כל שיחה שלא נענית היא לקוח שמתקשר למתחרה. כשאתם לא יכולים לענות, המספר העסקי שלכם שולח חזרה SMS אוטומטי תוך 3 שניות &mdash; והליד נשאר שלכם.</p>
     <div class="cta">
-      <a href="demo.html" class="btn btn-primary">▶ Watch the 9-sec live demo</a>
-      <a href="https://wa.me/972552543996?text=Hi%20I%20saw%20the%20missed-call%20text-back%20bot%20-%20tell%20me%20about%20the%20pilot" class="btn btn-ghost" target="_blank" rel="noopener">Ask about the pilot &rarr;</a>
+      <a href="demo.html" class="btn btn-primary">▶ צפו בדימו החי של 9 שניות</a>
+      <a href="https://wa.me/972552543996?text=היי%20ראיתי%20את%20הבוט%20להחזרת%20שיחות%20שלא%20נענו%20-%20ספרו%20לי%20על%20הפיילוט" class="btn btn-ghost" target="_blank" rel="noopener">שאלו על הפיילוט &larr;</a>
     </div>
 
     <div class="stats">
-      <div class="stat"><div class="n">3 sec</div><div class="l">to first auto-reply text</div></div>
-      <div class="stat"><div class="n">21&times;</div><div class="l">higher qualification vs &gt;30 min reply*</div></div>
-      <div class="stat"><div class="n">0</div><div class="l">new staff or software to learn</div></div>
+      <div class="stat"><div class="n">3 שנ'</div><div class="l">ל-SMS האוטומטי הראשון</div></div>
+      <div class="stat"><div class="n">×21</div><div class="l">סיכוי סגירה גבוה יותר ממענה ב-&gt;30 דק'</div></div>
+      <div class="stat"><div class="n">0</div><div class="l">עובדים חדשים או תוכנות ללמוד</div></div>
     </div>
-    <p style="font-size:12px;color:var(--mut);margin-top:14px">*Speed-to-lead benchmark commonly cited across industry research.</p>
+    <p style="font-size:12px;color:var(--mut);margin-top:14px">*נתון מקובל במחקרי תעשייה על מהירות מענה ללידים.</p>
   </div>
 </header>
 
 <section class="problem">
   <div class="wrap">
-    <h2>The leak you can't see</h2>
-    <p>You're under a sink, on a ladder, or driving between jobs. The phone rings. By the time you call back an hour later, that customer already booked the next guy on Google.</p>
+    <h2>הדליפה שלא רואים</h2>
+    <p>אתם מתחת לכיור, על סולם, או נוסעים בין עבודות. הטלפון מצלצל. כשאתם מתקשרים חזרה שעה אחר כך, הלקוח כבר הזמין את הבא בתור בגוגל.</p>
     <ul>
-      <li><span class="x">&times;</span><div><strong>Most of your revenue calls come while you're hands-on.</strong> You can't answer and you can't hire a receptionist for the volume.</div></li>
-      <li><span class="x">&times;</span><div><strong>Voicemail is a dead end.</strong> Callers don't leave messages anymore &mdash; they just redial the next result on the list.</div></li>
-      <li><span class="x">&times;</span><div><strong>You pay for the lead, then lose it at the finish line.</strong> Ad spend + missed call = paying to send customers to your competitor.</div></li>
+      <li><span class="x">&times;</span><div><strong>רוב שיחות ההכנסה מגיעות כשהידיים עסוקות.</strong> אי אפשר לענות, ואי אפשר להרשות לעצמכם מזכירה במידה שתואמת את העומס.</div></li>
+      <li><span class="x">&times;</span><div><strong>מזכירה קולית היא סוף דרך.</strong> לקוחות כבר לא משאירים הודעות &mdash; הם פשוט מחייגים לתוצאה הבאה ברשימה.</div></li>
+      <li><span class="x">&times;</span><div><strong>משלמים על הליד, ואז מפסידים אותו בקו הסיום.</strong> הוצאה על פרסום + שיחה שלא נענתה = שלם כדי לשלוח לקוחות למתחרה.</div></li>
     </ul>
   </div>
 </section>
 
 <section class="solution">
   <div class="wrap">
-    <h2>How the text-back bot works</h2>
+    <h2>איך בוט החזרת השיחות עובד</h2>
     <div class="steps">
       <div class="step">
         <span class="num">1</span>
-        <h3>A call comes in and you can't pick up</h3>
-        <p>The call rings out unanswered (or goes to voicemail). No app to open, nothing to press.</p>
-        <div class="demo">📞 incoming call &mdash; no answer</div>
+        <h3>שיחה נכנסת ואתם לא יכולים לענות</h3>
+        <p>השיחה מצלצלת ולא נענית (או נופלת למזכירה קולית). אין אפליקציה לפתוח, אין כפתור ללחוץ.</p>
+        <div class="demo">📞 שיחה נכנסת &mdash; אין מענה</div>
       </div>
       <div class="step">
         <span class="num">2</span>
-        <h3>Your business number auto-texts back in ~3 seconds</h3>
-        <p>A short, personalized SMS is sent to the caller so they know you saw them and will get back to them &mdash; before they call anyone else.</p>
-        <div class="demo"><span class="you">SMS &rarr; caller:</span> "Hi, this is Tal &mdash; I'm on a job right now and missed your call. What do you need? I'll get back to you within the hour."</div>
+        <h3>המספר העסקי שולח חזרה SMS תוך ~3 שניות</h3>
+        <p>הודעה קצרה ואישית נשלחת למתקשר כדי שידעו שראיתם אותם ותחזרו אליהם &mdash; לפני שיתקשרו למישהו אחר.</p>
+        <div class="demo"><span class="you">SMS &rarr; למתקשר:</span> "היי, זה טל &mdash; אני על עבודה עכשיו ופספסתי את השיחה שלך. במה אוכל לעזור? חוזר אליך תוך שעה."</div>
       </div>
       <div class="step">
         <span class="num">3</span>
-        <h3>The lead stays yours &mdash; and gets logged</h3>
-        <p>Every missed-call + reply is logged in a simple sheet you can check at the end of the day. No leads slipping through.</p>
-        <div class="demo">📝 logged &rarr; timestamp, caller, reply sent, follow-up status</div>
+        <h3>הליד נשאר שלכם &mdash; ונרשם בטבלה</h3>
+        <p>כל שיחה שלא נענתה + התגובה נרשמים בטבלה פשוטה שאפשר לבדוק בסוף היום. שום ליד לא נופל בין הכיסאות.</p>
+        <div class="demo">📝 נרשם &rarr; שעה, מספר מתקשר, נשלח SMS, סטטוס מעקב</div>
       </div>
     </div>
   </div>
@@ -155,78 +147,78 @@
 
 <section id="roi">
   <div class="wrap center">
-    <h2>What are missed calls costing you?</h2>
-    <p>Drag the sliders to match your business. This is a rough estimate, not a sales trick.</p>
+    <h2>כמה שיחות שלא נענו עולות לכם?</h2>
+    <p>הזיזו את הסליידרים לפי העסק שלכם. זו אומדן גס, לא טריק מכירתי.</p>
     <div class="calc">
       <div class="row">
-        <label>Incoming calls per day <span class="val" id="v_calls">12</span></label>
+        <label>שיחות נכנסות ביום <span class="val" id="v_calls">12</span></label>
         <input type="range" id="calls" min="2" max="60" value="12">
       </div>
       <div class="row">
-        <label>% you miss while on a job <span class="val" id="v_missed">40%</span></label>
+        <label>% שאתם מפספסים כשאתם על עבודה <span class="val" id="v_missed">40%</span></label>
         <input type="range" id="missed" min="5" max="90" value="40">
       </div>
       <div class="row">
-        <label>% of those you'd close <span class="val" id="v_close">30%</span></label>
+        <label>% מאלה שהייתם סוגרים <span class="val" id="v_close">30%</span></label>
         <input type="range" id="close" min="5" max="80" value="30">
       </div>
       <div class="row">
-        <label>Average job value ($) <span class="val" id="v_job">$250</span></label>
-        <input type="range" id="job" min="50" max="2000" value="250" step="10">
+        <label>שווי עבודה ממוצע (₪) <span class="val" id="v_job">₪900</span></label>
+        <input type="range" id="job" min="200" max="8000" value="900" step="50">
       </div>
       <div class="out">
         <div class="o lost">
-          <div class="big" id="o_lost">$0</div>
-          <div class="s">lost / month (est.)</div>
+          <div class="big" id="o_lost">₪0</div>
+          <div class="s">הפסד / חודש (אומדן)</div>
         </div>
         <div class="o save">
-          <div class="big" id="o_save">$0</div>
-          <div class="s">recoverable / month</div>
+          <div class="big" id="o_save">₪0</div>
+          <div class="s">ניתן להצלה / חודש</div>
         </div>
         <div class="o">
-          <div class="big" id="o_roi">0&times;</div>
-          <div class="s">return on the $97 pilot</div>
+          <div class="big" id="o_roi">0×</div>
+          <div class="s">החזר על הפיילוט ₪350</div>
         </div>
       </div>
-      <p class="note">Assumes ~22 working days/month. Recoverable assumes the bot recovers a portion of missed leads that would otherwise be lost.</p>
+      <p class="note">מניח ~22 ימי עבודה בחודש. "ניתן להצלה" מניח שהבוט מציל חלק מהלידים שאחרת היו הולכים לאיבוד.</p>
     </div>
   </div>
 </section>
 
 <section class="pricing">
   <div class="wrap center">
-    <h2>Simple, honest pricing</h2>
-    <p>No contracts. Cancel anytime. Pilot spots are limited because each one is set up by hand.</p>
+    <h2>מחיר פשוט וכנה</h2>
+    <p>בלי חוזים. מבטלים מתי שרוצים. מקומות הפיילוט מוגבלים כי כל אחד מוקם ידנית.</p>
     <div class="grid">
       <div class="plan">
-        <div class="t">Pilot (first month)</div>
-        <div class="p">$97</div>
+        <div class="t">פיילוט (חודש ראשון)</div>
+        <div class="p">₪350</div>
         <ul>
-          <li>Missed-call text-back on your number</li>
-          <li>Lead logging sheet</li>
-          <li>Set up by hand, usually same day</li>
+          <li>החזרת SMS לשיחות שלא נענו על המספר שלכם</li>
+          <li>טבלת רישום לידים</li>
+          <li>הקמה ידנית, בד"כ באותו יום</li>
         </ul>
-        <a href="https://wa.me/972552543996?text=Hi%20I%20want%20a%20pilot%20spot%20for%20the%20missed-call%20text-back%20bot" class="btn btn-primary" target="_blank" rel="noopener">Claim a pilot spot</a>
+        <a href="https://wa.me/972552543996?text=היי%20אני%20רוצה%20מקום%20פיילוט%20לבוט%20החזרת%20שיחות%20שלא%20נענו" class="btn btn-primary" target="_blank" rel="noopener">שריינו מקום פיילוט</a>
       </div>
       <div class="plan feat">
-        <div class="t">Monthly (after pilot)</div>
-        <div class="p">$49/mo</div>
+        <div class="t">חודשי (אחרי הפיילוט)</div>
+        <div class="p">₪179/חודש</div>
         <ul>
-          <li>Everything in pilot</li>
-          <li>Custom reply text</li>
-          <li>Weekly leads-saved report</li>
+          <li>כל מה שבפיילוט</li>
+          <li>טקסט תגובה מותאם אישית</li>
+          <li>דוח "לידים שניצלו" שבועי</li>
         </ul>
-        <a href="https://wa.me/972552543996?text=Hi%20I%20have%20a%20question%20about%20the%20monthly%20plan" class="btn btn-ghost" target="_blank" rel="noopener">Ask a question</a>
+        <a href="https://wa.me/972552543996?text=היי%20יש%20לי%20שאלה%20על%20המסלול%20החודשי" class="btn btn-ghost" target="_blank" rel="noopener">שאלו שאלה</a>
       </div>
       <div class="plan">
-        <div class="t">Not sure yet?</div>
-        <div class="p">Free</div>
+        <div class="t">עדיין לא בטוחים?</div>
+        <div class="p">חינם</div>
         <ul>
-          <li>30-min call to see if it fits</li>
-          <li>No pressure, no card needed</li>
-          <li>I'll show you the live demo</li>
+          <li>שיחה קצרה לראות אם זה מתאים</li>
+          <li>בלי לחץ, בלי כרטיס אשראי</li>
+          <li>אראה לכם דימו חי</li>
         </ul>
-        <a href="mailto:tal.derie.td@gmail.com?subject=Missed-call%20bot%20question" class="btn btn-ghost">Email Tal</a>
+        <a href="mailto:tal.derie.td@gmail.com?subject=שאלה%20על%20בוט%20החזרת%20שיחות" class="btn btn-ghost">שלחו מייל לטל</a>
       </div>
     </div>
   </div>
@@ -234,30 +226,30 @@
 
 <section class="faq">
   <div class="wrap">
-    <h2 class="center">Questions you probably have</h2>
-    <details><summary>Do I need to change my phone number?</summary><p>No. The text-back runs on a forwarding number that points to your existing line, or we use your current business number &mdash; your choice. We go over this on the setup call.</p></details>
-    <details><summary>Will it look like spam to my customers?</summary><p>No. The reply is short, signed by you, and only fires when a real call is missed &mdash; not on every contact. It reads like a human, because it's written like one.</p></details>
-    <details><summary>What if I answer the phone?</summary><p>Then nothing happens. The bot only kicks in when a call goes unanswered. If you pick up, it stays out of the way.</p></details>
-    <details><summary>How fast can I be live?</summary><p>If there's a pilot spot open, usually the same day you say yes. Setup takes about 10&ndash;15 minutes on a quick call.</p></details>
-    <details><summary>Is this a real person or a bot?</summary><p>Both. The bot handles the instant text-back so no lead goes cold. I (Tal) personally handle setup, questions, and anything that needs a human. You can always reach me directly.</p></details>
+    <h2 class="center">שאלות שכנראה יש לכם</h2>
+    <details><summary>צריך להחליף את מספר הטלפון שלי?</summary><p>לא. החזרת ה-SMS רצה על מספר העברה שמצביע לקו הקיים שלכם, או שנשתמש במספר העסקי הנוכחי &mdash; לבחירתכם. עוברים על זה בשיחת ההקמה.</p></details>
+    <details><summary>הלקוחות שלי יראו בזה ספאם?</summary><p>לא. התגובה קצרה, חתומה על ידכם, ונשלחת רק כששיחה באמת לא נענתה &mdash; לא על כל פנייה. היא קוראת כמו בן אדם, כי כתובה ככה.</p></details>
+    <details><summary>מה אם אני עונה לטלפון?</summary><p>אז כלום לא קורה. הבוט נכנס לפעולה רק כששיחה לא נענית. אם עניתם &mdash; הוא נשאר בצד.</p></details>
+    <details><summary>כמה מהר אני יכול להיות באוויר?</summary><p>אם יש מקום פיילוט פנוי &mdash; בד"כ באותו יום שאתם אומרים כן. ההקמה לוקחת כ-10&ndash;15 דקות בשיחה קצרה.</p></details>
+    <details><summary>זה בן אדם או בוט?</summary><p>גם וגם. הבוט מטפל ב-SMS המיידי כדי ששום ליד לא יתקרר. אני (טל) מטפל אישית בהקמה, בשאלות, ובכל דבר שדורש בן אדם. תמיד אפשר להגיע אליי ישירות.</p></details>
   </div>
 </section>
 
 <section class="final">
   <div class="wrap">
-    <h2>Every missed call today is a job your competitor gets.</h2>
-    <p>See the bot catch one in 9 seconds, then decide.</p>
+    <h2>כל שיחה שלא נענית היום היא עבודה שהמתחרה שלכם מקבל.</h2>
+    <p>בואו נעצור את הדליפה. פיילוט ₪350, הקמה ידנית, בלי חוזה.</p>
     <div class="cta">
-      <a href="demo.html" class="btn btn-primary">▶ Watch the live demo</a>
-      <a href="https://wa.me/972552543996?text=I%20want%20a%20pilot%20spot%20for%20the%20missed-call%20text-back%20bot" class="btn btn-ghost" target="_blank" rel="noopener">Claim a pilot spot on WhatsApp</a>
-      <a href="mailto:tal.derie.td@gmail.com?subject=Pilot%20spot%20-%20missed-call%20bot" class="btn btn-ghost">✉ Email Tal</a>
+      <a href="demo.html" class="btn btn-primary">▶ צפו בדימו החי</a>
+      <a href="https://wa.me/972552543996?text=אני%20רוצה%20מקום%20פיילוט%20לבוט%20החזרת%20שיחות%20שלא%20נענו" class="btn btn-ghost" target="_blank" rel="noopener">שריינו מקום פיילוט בוואטסאפ</a>
+      <a href="mailto:tal.derie.td@gmail.com?subject=מקום%20פיילוט%20-%20בוט%20החזרת%20שיחות" class="btn btn-ghost">✉ שלחו מייל לטל</a>
     </div>
   </div>
 </section>
 
 <footer>
   <div class="wrap">
-    Missed-Call Text-Back &middot; run by Tal &middot; <a href="https://wa.me/972552543996" target="_blank" rel="noopener">WhatsApp</a> &middot; <a href="mailto:tal.derie.td@gmail.com">Email</a>
+    החזרת שיחות שלא נענו &middot; מופעל על ידי טל &middot; <a href="https://wa.me/972552543996" target="_blank" rel="noopener">וואטסאפ</a> &middot; <a href="mailto:tal.derie.td@gmail.com">מייל</a>
   </div>
 </footer>
 
@@ -273,16 +265,16 @@
   const o_lost=document.getElementById('o_lost'),
         o_save=document.getElementById('o_save'),
         o_roi=document.getElementById('o_roi');
-  const PILOT=97, DAYS=22, RECOVER=0.6; // rough share of missed leads the bot wins back
+  const PILOT=350, DAYS=22, RECOVER=0.6;
 
-  function money(n){return '$'+Math.round(n).toLocaleString('en-US');}
+  function money(n){return '₪'+Math.round(n).toLocaleString('he-IL');}
 
   function recalc(){
     const c=+calls.value, m=+missed.value, cl=+close.value, j=+job.value;
     v_calls.textContent=c;
     v_missed.textContent=m+'%';
     v_close.textContent=cl+'%';
-    v_job.textContent='$'+j;
+    v_job.textContent='₪'+j.toLocaleString('he-IL');
     const missedPerDay=c*m/100;
     const missedPerMonth=missedPerDay*DAYS;
     const lost=missedPerMonth*cl/100*j;

@@ -1,16 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Live Demo | Missed-Call Text-Back Bot</title>
+<title>דימו חי | בוט החזרת שיחות שלא נענו</title>
 <style>
   :root{
     --bg:#0b0f14; --bg2:#11171f; --card:#161e28; --txt:#e6edf3; --mut:#8b98a5;
     --acc:#22c55e; --danger:#ef4444; --line:#243041; --blue:#3b82f6;
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;line-height:1.5}
+  body{font-family:"Segoe UI",Arial,"Heebo",Roboto,sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;line-height:1.5}
   h1{font-size:clamp(20px,5vw,30px);font-weight:800;text-align:center;margin-bottom:6px;letter-spacing:-.02em}
   .sub{color:var(--mut);text-align:center;font-size:14px;margin-bottom:28px;max-width:480px}
   .stage{width:100%;max-width:420px}
@@ -53,8 +53,8 @@
   .msg-header .dot{width:28px;height:28px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;font-weight:700}
   .msg-body{flex:1;padding:12px;display:flex;flex-direction:column;gap:8px;overflow-y:auto}
   .bubble{max-width:78%;padding:8px 11px;border-radius:14px;font-size:12px;line-height:1.4;animation:slidein .3s ease}
-  .bubble.in{align-self:flex-start;background:#222;color:var(--txt);border-bottom-left-radius:4px}
-  .bubble.out{align-self:flex-end;background:var(--acc);color:#06140a;border-bottom-right-radius:4px}
+  .bubble.in{align-self:flex-end;background:#222;color:var(--txt);border-bottom-right-radius:4px}
+  .bubble.out{align-self:flex-start;background:var(--acc);color:#06140a;border-bottom-left-radius:4px}
   .bubble .time{font-size:9px;opacity:.6;margin-top:3px;display:block}
   .typing{align-self:flex-start;background:#222;padding:8px 11px;border-radius:14px;font-size:11px;color:var(--mut)}
 
@@ -78,8 +78,8 @@
 </head>
 <body>
 
-<h1>Watch the bot catch a missed call in 3 seconds</h1>
-<p class="sub">This is the exact flow your customers experience. Press play — no sound needed.</p>
+<h1>צפו בבוט תופס שיחה שלא נענתה תוך 3 שניות</h1>
+<p class="sub">זה בדיוק התהליך שהלקוחות שלכם עוברים. לחצו נגן &mdash; בלי צליל.</p>
 
 <div class="stage">
   <div class="phone">
@@ -87,25 +87,25 @@
     <div class="screen">
       <!-- incoming call -->
       <div class="call-screen" id="callScreen">
-        <div class="caller-av">SC</div>
-        <div class="caller-name">Sarah Chen</div>
-        <div class="caller-num">(555) 240-1187</div>
-        <div class="ring-status" id="ringStatus">calling…</div>
-        <button class="hangup" id="hangupBtn" title="Ignore call (simulate you being on a job)">✕</button>
+        <div class="caller-av">יי</div>
+        <div class="caller-name">ישראל ישראלי</div>
+        <div class="caller-num">לקוח פוטנציאלי</div>
+        <div class="ring-status" id="ringStatus">מצלצל…</div>
+        <button class="hangup" id="hangupBtn" title="התעלם מהשיחה (דמיינו שאתם על עבודה)">✕</button>
       </div>
       <!-- missed / lock -->
       <div class="lock-screen" id="lockScreen">
-        <div class="missed-badge">1 missed call</div>
-        <div class="clock" id="clock">2:14 PM</div>
-        <div class="lock-date">Tuesday, today</div>
+        <div class="missed-badge">שיחה אחת שלא נענתה</div>
+        <div class="clock" id="clock">14:14</div>
+        <div class="lock-date">שלישי, היום</div>
         <div class="lock-notif" id="smsNotif" style="display:none">
-          <div class="app">Messages · now</div>
-          <div class="msg">Hi Sarah, this is Tal — I'm on a job right now and missed your call. What do you need? I'll get back to you within the hour.</div>
+          <div class="app">הודעות · עכשיו</div>
+          <div class="msg">היי, ראיתי שחיפשת אותי ולא הספקתי לענות. במה אוכל לעזור?</div>
         </div>
       </div>
       <!-- messaging -->
       <div class="msg-screen" id="msgScreen">
-        <div class="msg-header"><span class="dot">SC</span> Sarah Chen</div>
+        <div class="msg-header"><span class="dot">יי</span> ישראל ישראלי</div>
         <div class="msg-body" id="msgBody"></div>
       </div>
     </div>
@@ -113,23 +113,23 @@
 
   <div class="progress">
     <div class="steps">
-      <span id="s1">1. Call rings</span>
-      <span id="s2">2. You miss it</span>
-      <span id="s3">3. Bot texts back</span>
-      <span id="s4">4. Lead captured</span>
+      <span id="s1">1. שיחה מצלצלת</span>
+      <span id="s2">2. אתם מפספסים</span>
+      <span id="s3">3. הבוט שולח SMS</span>
+      <span id="s4">4. ליד נתפס</span>
     </div>
     <div class="bar"><div class="bar-fill" id="barFill"></div></div>
   </div>
 
   <div class="controls">
-    <button class="btn btn-primary" id="playBtn">▶ Play demo</button>
-    <button class="btn btn-ghost replay" id="resetBtn">↺ Replay</button>
+    <button class="btn btn-primary" id="playBtn">▶ נגן דימו</button>
+    <button class="btn btn-ghost replay" id="resetBtn">↺ נגן שוב</button>
   </div>
 </div>
 
 <p class="footer-note">
-  This is a live simulation. The real bot does the same thing automatically — no app to open, nothing to press.<br>
-  See pricing &amp; claim a pilot: <a href="https://infinityempire.github.io/vocalizebot/">missed-call text-back bot →</a>
+  זו סימולציה חיה. הבוט האמיתי עושה את אותו הדבר באופן אוטומטי &mdash; אין אפליקציה לפתוח, אין כפתור ללחוץ.<br>
+  למחירים ולשריון פיילוט: <a href="https://infinityempire.github.io/vocalizebot/">בוט החזרת שיחות שלא נענו ←</a>
 </p>
 
 <script>
@@ -166,22 +166,22 @@ function reset(){
   msgScreen.classList.remove('show');
   smsNotif.style.display='none';
   msgBody.innerHTML='';
-  ringStatus.textContent='calling…';
+  ringStatus.textContent='מצלצל…';
   hangupBtn.style.display='';
   setStep(-1);barFill.style.width='0';
-  playBtn.textContent='▶ Play demo';playBtn.disabled=false;
+  playBtn.textContent='▶ נגן דימו';playBtn.disabled=false;
   resetBtn.classList.remove('ready');
 }
 
 function run(){
   clearAll();
-  playBtn.disabled=true;playBtn.textContent='Running…';
+  playBtn.disabled=true;playBtn.textContent='מריץ…';
   resetBtn.classList.remove('ready');
 
   // step 1: call rings
   setStep(0);
   let ringCount=0;
-  const ringInt=setInterval(()=>{ringCount++;ringStatus.textContent='calling… '+ringCount;if(ringCount>=4){clearInterval(ringInt);}},800);
+  const ringInt=setInterval(()=>{ringCount++;ringStatus.textContent='מצלצל… '+ringCount;if(ringCount>=4){clearInterval(ringInt);}},800);
   timers.push(ringInt);
 
   // auto-ignore after ~3.4s if user doesn't hang up
@@ -209,23 +209,23 @@ function goToMissed(){
   t(()=>{
     lockScreen.classList.remove('show');
     msgScreen.classList.add('show');
-    addBubble('Hi, I saw I missed a call from you — do you do emergency plumbing?', 'in');
+    addBubble('היי, ראיתי שחיפשת אותי. אתם עושים אינסטלציה עם דחיפות?', 'in');
   },4500);
 
   t(()=>{
-    addBubble("Hi Sarah! Yes I do. What's going on?", 'out');
+    addBubble('היי! כן, במה מדובר?', 'out');
   },5800);
 
   t(()=>{
-    addBubble('Kitchen sink is backed up, water everywhere 😩', 'in');
+    addBubble('כיור במטבח סתום, המים עולים 😩', 'in');
   },7000);
 
   t(()=>{
     // step 4: lead captured
     setStep(3);
-    addBubble("On my way in 40 min. Hold tight — and don't worry, it's sorted.", 'out');
+    addBubble('מגיע בעוד 40 דקות. אל תדאגו, סודר.', 'out');
     resetBtn.classList.add('ready');
-    playBtn.textContent='✓ Done';playBtn.disabled=true;
+    playBtn.textContent='✓ הסתיים';playBtn.disabled=true;
   },8500);
 }
 
