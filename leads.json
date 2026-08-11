@@ -28,5 +28,65 @@
     "phone": "+972504080898",
     "city": "Tel Aviv",
     "category": "electrician"
+  },
+  {
+    "name": "Ofer Plumber",
+    "phone": "+972544553508",
+    "city": "Haifa",
+    "category": "plumber"
+  },
+  {
+    "name": "Haim Yitzhak Plumbing",
+    "phone": "+972505281480",
+    "city": "Haifa",
+    "category": "plumber"
+  },
+  {
+    "name": "Techlock Israel",
+    "phone": "+972544636194",
+    "city": "Haifa",
+    "category": "locksmith"
+  },
+  {
+    "name": "Amotz Garage",
+    "phone": "+972522663618",
+    "city": "Haifa",
+    "category": "garage"
+  },
+  {
+    "name": "Express Haifa Garage",
+    "phone": "+97248530055",
+    "city": "Haifa",
+    "category": "garage"
+  },
+  {
+    "name": "Rishon LeZion Plumber (Aharon Hacohen)",
+    "phone": "+972502403939",
+    "city": "Rishon LeZion",
+    "category": "plumber"
+  },
+  {
+    "name": "Avi Electrician Rishon LeZion",
+    "phone": "+972546232247",
+    "city": "Rishon LeZion",
+    "category": "electrician"
+  },
+  {
+    "name": "Yoel Grasi Electrician",
+    "phone": "+972528262593",
+    "city": "Rishon LeZion",
+    "category": "electrician"
+  },
+  {
+    "name": "Fast Locksmith 20min",
+    "phone": "+97235515464",
+    "city": "Rishon LeZion",
+    "category": "locksmith"
+  },
+  {
+    "name": "Michael Advanced Car Services",
+    "phone": "+97239669655",
+    "city": "Rishon LeZion",
+    "category": "garage"
   }
 ]
