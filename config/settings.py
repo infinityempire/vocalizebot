@@ -61,6 +61,10 @@ class Settings(BaseSettings):
     paypal_mode: str = "sandbox"  # sandbox or live
     paypal_webhook_id: Optional[str] = None
 
+    # Payment - Stripe (Secondary)
+    stripe_api_key: Optional[str] = None
+    stripe_webhook_secret: Optional[str] = None
+
     # Human Escalation
     human_escalation_webhook_url: Optional[str] = None
     blackout_mode_threshold: int = 3

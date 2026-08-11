@@ -1,0 +1,36 @@
+# ============================================================================
+# vocalizebot-main.service - systemd unit for the primary backend (main.py)
+#
+# Auto-restarts the service on crash (Restart=always) and on reboot
+# (WantedBy=multi-user.target + systemctl enable).
+#
+# Install on a real server (not needed in containers where systemd is offline):
+#   sudo cp deploy/vocalizebot-main.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now vocalizebot-main
+#   sudo systemctl status vocalizebot-main
+# ============================================================================
+
+[Unit]
+Description=VocalizeBot Primary Backend (Telegram Voice Bot)
+Documentation=https://github.com/infinityempire/vocalizebot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/workspace/project
+ExecStart=/workspace/project/.venv/bin/python /workspace/project/main.py
+Restart=always
+RestartSec=5
+# Load secrets from the environment file (git-ignored)
+EnvironmentFile=-/workspace/project/.env
+StandardOutput=append:/workspace/project/logs/server.log
+StandardError=append:/workspace/project/logs/server.log
+# Basic hardening
+NoNewPrivileges=true
+ProtectSystem=full
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
