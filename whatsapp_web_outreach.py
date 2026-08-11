@@ -147,6 +147,11 @@ def profile_dir() -> Path:
     return Path(override) if override else Path.home() / ".whatsapp_profile"
 
 
+def is_headless() -> bool:
+    """Whether the browser should run headless (default true)."""
+    return os.getenv("WHATSAPP_HEADLESS", "true").lower() not in ("0", "false", "no")
+
+
 def preflight_check() -> str:
     """Return an error message if the send backend is unusable, else empty string."""
     try:
@@ -184,7 +189,7 @@ def send_one(phone: str, message: str, headless: bool, wait_timeout_ms: int) -> 
 
         # Detect a QR code (not logged in) vs chat open
         try:
-            page.wait_for_selector("[data-ref]", timeout=8000)
+            page.wait_for_selector("[data-ref]", timeout=15000)
             logger.error(
                 "WhatsApp Web is not logged in. Run --login first (needs a display)."
             )
@@ -252,7 +257,7 @@ def run(args) -> int:
     sent = load_sent_history()
     template = os.getenv("OUTREACH_MESSAGE_TEMPLATE", DEFAULT_TEMPLATE)
     delay = float(os.getenv("WHATSAPP_DELAY_SECONDS", "12"))
-    headless = os.getenv("WHATSAPP_HEADLESS", "true").lower() not in ("0", "false", "no")
+    headless = is_headless()
 
     if args.validate:
         print(f"leads.json: {len(leads)} lead(s)")
@@ -289,16 +294,16 @@ def run(args) -> int:
         logger.info("No pending leads — everything already in sent_history.json.")
         return 0
 
-    err = preflight_check()
-    if err:
-        logger.error(f"Send preflight failed: {err}")
-        return 1
-
     if not profile_dir().exists():
         logger.error(
             f"No WhatsApp profile found at {profile_dir()}. Run "
             f"`python3 whatsapp_web_outreach.py --login` once (needs a display)."
         )
+        return 1
+
+    err = preflight_check()
+    if err:
+        logger.error(f"Send preflight failed: {err}")
         return 1
 
     try:
@@ -347,7 +352,7 @@ def main() -> int:
     args = parser.parse_args()
 
     if args.login:
-        return cmd_login(os.getenv("WHATSAPP_HEADLESS", "true").lower() not in ("0", "false", "no"))
+        return cmd_login(is_headless())
 
     args.dry_run = args.dry_run or not args.send
     return run(args)
