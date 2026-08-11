@@ -1,14 +1,32 @@
 [
   {
-    "name": "Example Business A - REPLACE ME",
-    "phone": "+972500000001",
-    "city": "Tel Aviv",
-    "category": "services"
+    "name": "Eliyah Plumber",
+    "phone": "+972528770556",
+    "city": "Jerusalem",
+    "category": "plumber"
   },
   {
-    "name": "Example Business B - REPLACE ME",
-    "phone": "+972500000002",
+    "name": "Maya Locksmith",
+    "phone": "+972585009075",
     "city": "Jerusalem",
-    "category": "retail"
+    "category": "locksmith"
+  },
+  {
+    "name": "Hamerkav Garage",
+    "phone": "+97226782293",
+    "city": "Jerusalem",
+    "category": "garage"
+  },
+  {
+    "name": "Moshe Dahan Electrician",
+    "phone": "+972507870151",
+    "city": "Jerusalem",
+    "category": "electrician"
+  },
+  {
+    "name": "Tsachi Aharon Electrician",
+    "phone": "+972504080898",
+    "city": "Tel Aviv",
+    "category": "electrician"
   }
 ]
