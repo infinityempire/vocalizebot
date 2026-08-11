@@ -369,6 +369,28 @@ async def transcribe_audio(request: TranscriptionRequest):
         )
 
 
+@app.post("/webhook/payment", tags=["Payments"])
+async def payment_webhook(request: Request):
+    """
+    PayPal payment webhook endpoint.
+
+    On a successful payment notification (``PAYMENT.CAPTURE.COMPLETED``),
+    the linked client account is automatically initialized and created in
+    ``vocalizebot.db`` — no manual action required.
+    """
+    try:
+        from src.services.payment import get_payment_service
+        body = await request.json()
+        service = get_payment_service()
+        return await service.handle_payment_webhook(body)
+    except Exception as e:
+        logger.error(f"Error processing payment webhook: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
+
+
 @app.get("/config", tags=["Config"])
 async def get_config():
     """

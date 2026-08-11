@@ -83,7 +83,8 @@ class TelegramBot:
         """Stop the Telegram bot."""
         if self.app and self._running:
             logger.info("Stopping Telegram bot...")
-            await self.app.updater.stop_polling()
+            if self.app.updater:
+                await self.app.updater.stop()
             await self.app.stop()
             await self.app.shutdown()
             self._running = False
@@ -152,15 +153,18 @@ class TelegramBot:
             f"duration: {voice.duration}s, file_id: {voice.file_id}"
         )
         
+        # Notify admin about the incoming voice message
+        await _notify_admin(update, context, extra_info=f"⏳ ממתין לתמלול ({voice.duration} שניות)")
+        
         # NEW: Subscription check for voice messages
         if self.subscription_manager:
             # Ensure user exists in the subscription manager
             self.subscription_manager.add_user(str(user_id)) # Add user if not exists
             
-            allowed, message = self.subscription_manager.can_transcribe(str(user_id), voice.duration)
+            allowed, sub_message = self.subscription_manager.can_transcribe(str(user_id), voice.duration)
             if not allowed:
-                await update.message.reply_text(message)
-                logger.info(f"User {user_id} blocked from transcribing voice due to: {message}")
+                await update.message.reply_text(sub_message)
+                logger.info(f"User {user_id} blocked from transcribing voice due to: {sub_message}")
                 return # Stop processing if not allowed
         else:
             logger.warning("SubscriptionManager not available, skipping voice transcription limits check.")
@@ -276,6 +280,14 @@ class TelegramBot:
         audio = update.message.audio # This will be a telegram.Audio object if it's an audio file
         document = update.message.document # This will be a telegram.Document object if it's a document
         
+        # Notify admin about the incoming audio file
+        file_name = ""
+        if audio:
+            file_name = audio.file_name or ""
+        elif document:
+            file_name = document.file_name or ""
+        await _notify_admin(update, context, extra_info=f"⏳ ממתין לתמלול אודיו ({file_name})")
+        
         # Determine if it's an audio file and get duration if available
         duration = 0
         file_to_process = None
@@ -301,10 +313,10 @@ class TelegramBot:
             
             # For audio files, we pass the determined duration. If it's a document,
             # we pass 1 to effectively only check the daily count.
-            allowed, message = self.subscription_manager.can_transcribe(str(user_id), duration)
+            allowed, sub_message = self.subscription_manager.can_transcribe(str(user_id), duration)
             if not allowed:
-                await update.message.reply_text(message)
-                logger.info(f"User {user_id} blocked from transcribing audio due to: {message}")
+                await update.message.reply_text(sub_message)
+                logger.info(f"User {user_id} blocked from transcribing audio due to: {sub_message}")
                 return # Stop processing if not allowed
         else:
             logger.warning("SubscriptionManager not available, skipping audio transcription limits check.")
@@ -376,6 +388,9 @@ class TelegramBot:
         
         logger.info(f"Text message from user {user_id}: {text[:50]}...")
         
+        # Notify admin about the incoming text message
+        await _notify_admin(update, context)
+        
         # Echo with confirmation (placeholder for AI response)
         await update.message.reply_text(
             f"📨 הודעתך התקבלה: {text[:100]}...\n\n"
@@ -390,6 +405,15 @@ class TelegramBot:
     
     async def _handle_start(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle /start command."""
+        user_id = update.effective_user.id
+        
+        # Add user to subscription manager if available
+        if self.subscription_manager:
+            self.subscription_manager.add_user(str(user_id))
+        
+        # Notify admin about new user
+        await _notify_admin(update, context, extra_info="🆕 משתמש חדש! /start")
+        
         welcome_text = """
 🤖 *ברוך הבא לבוט התמלול!*
 
@@ -438,6 +462,9 @@ class TelegramBot:
     
     async def _handle_unhandled(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle unhandled message types."""
+        # Notify admin about unhandled message type
+        await _notify_admin(update, context, extra_info="⚠️ סוג הודעה לא מזוהה")
+        
         await update.message.reply_text(
             "🤔 אני יודע לעבד הודעות קוליות וטקסט. נסה לשלוח הודעה קולית!"
         )
@@ -462,6 +489,119 @@ class TelegramBot:
         self.user_contexts[user_id].update(kwargs)
 
 
+# =========================================================================
+# ADMIN NOTIFICATION HELPER
+# =========================================================================
+
+async def _notify_admin(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+    extra_info: Optional[str] = None
+) -> None:
+    """
+    Forward a copy of the incoming message/customer details to the admin chat.
+    
+    This is used for monitoring and real-time awareness of all customer
+    interactions with the Vocalize bot. The admin receives a formatted
+    message with user details and message content.
+    
+    Args:
+        update: Telegram update object
+        context: Telegram context object
+        extra_info: Optional additional info to append (e.g. subscription status, transcription result)
+    """
+    admin_chat_id = settings.telegram_admin_chat_id
+    if not admin_chat_id:
+        return  # Admin notifications not configured
+    
+    try:
+        user = update.effective_user
+        chat = update.effective_chat
+        message = update.message
+        
+        if not user or not message:
+            return
+        
+        # Build user details section
+        user_id = user.id
+        username = f"@{user.username}" if user.username else "-"
+        first_name = user.first_name or "-"
+        last_name = user.last_name or ""
+        full_name = f"{first_name} {last_name}".strip()
+        chat_type = chat.type if chat else "private"
+        chat_id = chat.id if chat else "-"
+        
+        # Build message content section
+        msg_date = message.date.strftime("%d/%m/%Y %H:%M:%S") if message.date else "-"
+        
+        if message.text:
+            msg_type = "📝 טקסט"
+            content = message.text
+        elif message.voice:
+            msg_type = "🎤 הודעה קולית"
+            content = f"[הודעה קולית - {message.voice.duration} שניות, {message.voice.file_size or '?'} bytes]"
+        elif message.audio:
+            msg_type = "🎵 קובץ אודיו"
+            content = f"[קובץ שמע: {message.audio.file_name or 'ללא שם'} - {message.audio.duration} שניות]"
+        elif message.document:
+            msg_type = "📄 מסמך"
+            content = f"[מסמך: {message.document.file_name or 'ללא שם'} - {message.document.mime_type or '?'}]"
+        elif message.photo:
+            msg_type = "🖼️ תמונה"
+            content = f"[תמונה - {len(message.photo)} גרסאות]"
+        elif message.video:
+            msg_type = "🎬 וידאו"
+            content = f"[וידאו - {message.video.duration or '?'} שניות]"
+        elif message.sticker:
+            msg_type = "😎 סטיקר"
+            content = f"[סטיקר: {message.sticker.emoji or ''}]"
+        else:
+            msg_type = "❓ אחר"
+            content = "[סוג הודעה לא מזוהה]"
+        
+        # Build the admin notification message
+        notification = (
+            f"🔔 <b>התקבלה הודעה חדשה</b>\n"
+            f"{'─' * 30}\n"
+            f"<b>👤 משתמש:</b> {full_name}\n"
+            f"<b>🆔 מזהה:</b> <code>{user_id}</code>\n"
+            f"<b>📛 שם משתמש:</b> {username}\n"
+            f"<b>🏠 צ'אט:</b> {chat_type} ({chat_id})\n"
+            f"{'─' * 30}\n"
+            f"<b>סוג:</b> {msg_type}\n"
+            f"<b>📅 תאריך:</b> {msg_date}\n"
+        )
+        
+        # Add message content (truncate if too long)
+        if content:
+            max_len = 3500  # Leave room for the rest of the message (Telegram limit is 4096)
+            original_len = len(content)
+            if original_len > max_len:
+                content = content[:max_len] + f"...\n\n[⚠️ ההודעה קוצרה, אורך מלא {original_len} תווים]"
+            notification += f"{'─' * 30}\n"
+            notification += f"<b>📄 תוכן:</b>\n<code>{content}</code>\n"
+        
+        # Add extra info if provided
+        if extra_info:
+            notification += f"{'─' * 30}\n"
+            notification += f"<b>ℹ️ מידע נוסף:</b>\n{extra_info}\n"
+        
+        notification += f"{'─' * 30}"
+        
+        # Send the notification
+        await context.bot.send_message(
+            chat_id=admin_chat_id,
+            text=notification,
+            parse_mode="HTML",
+            disable_notification=False
+        )
+        
+        logger.debug(f"Admin notification sent for user {user_id} to {admin_chat_id}")
+        
+    except Exception as e:
+        logger.error(f"Failed to send admin notification: {e}")
+
+
 # Singleton instance
 _telegram_bot: Optional[TelegramBot] = None
 
@@ -480,3 +620,11 @@ async def start_telegram_bot(subscription_manager: Optional[SubscriptionManager]
     bot = get_telegram_bot(subscription_manager=subscription_manager) # Pass manager to get_telegram_bot
     await bot.start()
     return bot
+
+
+async def stop_telegram_bot() -> None:
+    """Stop the Telegram bot."""
+    global _telegram_bot
+    if _telegram_bot:
+        await _telegram_bot.stop()
+        _telegram_bot = None

@@ -40,6 +40,11 @@ env/
 *.log
 logs/
 
+# Databases (runtime artifacts - never commit customer data)
+*.db
+*.db-journal
+*.sqlite
+
 # OS
 .DS_Store
 Thumbs.db

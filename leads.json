@@ -1,0 +1,14 @@
+[
+  {
+    "name": "Example Business A - REPLACE ME",
+    "phone": "+972500000001",
+    "city": "Tel Aviv",
+    "category": "services"
+  },
+  {
+    "name": "Example Business B - REPLACE ME",
+    "phone": "+972500000002",
+    "city": "Jerusalem",
+    "category": "retail"
+  }
+]
