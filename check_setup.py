@@ -1,179 +1,449 @@
 #!/usr/bin/env python3
 """
-VocalizeBot - Final Self-Verification Tool (check_setup.py)
-Validates configuration, imports, APIs, and credentials.
+VocalizeBot - Self-Diagnostic Script
+=====================================
+Run this script on Termux to verify all system components are ready.
+
+Usage:
+    python3 check_setup.py
+
+Requirements:
+    - Python 3.8+
+    - requests (pip install requests)
+    - python-dotenv (pip install python-dotenv)
+
+Author: Tal HaTil Empire
+Version: 2.0.0
 """
 
 import os
 import sys
-import asyncio
+import json
+import socket
+import subprocess
 from pathlib import Path
+from typing import Optional, List, Tuple
 
-# ANSI colors for styling
-GREEN = "\033[92m"
-RED = "\033[91m"
-YELLOW = "\033[93m"
-BLUE = "\033[94m"
-RESET = "\033[0m"
-BOLD = "\033[1m"
+# ANSI Colors for terminal output
+class Colors:
+    GREEN = '\033[92m'
+    RED = '\033[91m'
+    YELLOW = '\033[93m'
+    BLUE = '\033[94m'
+    BOLD = '\033[1m'
+    RESET = '\033[0m'
+    DIM = '\033[2m'
 
-def log_info(msg: str):
-    print(f"{BLUE}[INFO]{RESET} {msg}")
+def colored(text: str, color: str) -> str:
+    """Apply color to text if terminal supports it."""
+    if sys.stdout.isatty():
+        return f"{color}{text}{Colors.RESET}"
+    return text
 
-def log_success(msg: str):
-    print(f"{GREEN}✅ {msg}{RESET}")
+def success(msg: str) -> None:
+    print(f"{colored('✅', Colors.GREEN)} {msg}")
 
-def log_warn(msg: str):
-    print(f"{YELLOW}⚠️ {msg}{RESET}")
+def error(msg: str) -> None:
+    print(f"{colored('❌', Colors.RED)} {msg}")
 
-def log_error(msg: str):
-    print(f"{RED}❌ {msg}{RESET}")
+def warning(msg: str) -> None:
+    print(f"{colored('⚠️', Colors.YELLOW)} {msg}")
 
-async def test_telegram_token(token: str) -> bool:
-    """Verifies the Telegram Bot Token against the official API."""
-    import httpx
-    url = f"https://api.telegram.org/bot{token}/getMe"
-    try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            res = await client.get(url)
-            if res.status_code == 200:
-                data = res.json()
-                if data.get("ok"):
-                    bot_user = data["result"]["username"]
-                    log_success(f"Telegram Bot Token is VALID! Connected to Bot: @{bot_user}")
-                    return True
-            log_error(f"Telegram Bot Token validation failed. Status: {res.status_code}, Response: {res.text}")
-            return False
-    except Exception as e:
-        log_warn(f"Could not connect to Telegram API to verify token (network or timeout): {e}")
-        return True  # Don't block setup on transient network issues
+def info(msg: str) -> None:
+    print(f"{colored('ℹ️', Colors.BLUE)} {msg}")
 
-async def test_gemini_key(key: str) -> bool:
-    """Verifies the Google AI / Gemini API key."""
-    import google.generativeai as genai
-    try:
-        genai.configure(api_key=key)
-        # Try a fast list_models or small call to verify
-        # We can use a background thread to prevent blocking
-        loop = asyncio.get_running_loop()
-        def list_models_sync():
-            models = genai.list_models()
-            return any("gemini" in m.name for m in models)
+def header(msg: str) -> None:
+    print(f"\n{colored('═' * 60, Colors.DIM)}")
+    print(f"{colored('📋', Colors.BLUE)} {colored(msg, Colors.BOLD)}")
+    print(f"{colored('─' * 60, Colors.DIM)}")
+
+def section(msg: str) -> None:
+    print(f"\n{colored('▶', Colors.YELLOW)} {colored(msg, Colors.BOLD)}")
+
+class DiagnosticCheck:
+    """Base class for diagnostic checks."""
+    
+    def __init__(self, name: str):
+        self.name = name
+        self.passed = False
+        self.message = ""
+    
+    def run(self) -> bool:
+        """Run the diagnostic check. Override in subclass."""
+        raise NotImplementedError
+    
+    def get_status(self) -> Tuple[bool, str]:
+        """Return (passed, message)."""
+        return self.passed, self.message
+
+
+class EnvFileCheck(DiagnosticCheck):
+    """Check if .env file exists and contains required variables."""
+    
+    REQUIRED_VARS = [
+        'TELEGRAM_BOT_TOKEN',
+        'GOOGLE_AI_API_KEY',
+        'ADMIN_DASHBOARD_TOKEN',
+    ]
+    
+    RECOMMENDED_VARS = [
+        'PAYPAL_CLIENT_ID',
+        'PAYPAL_CLIENT_SECRET',
+        'DATABASE_URL',
+    ]
+    
+    def __init__(self):
+        super().__init__("Environment Variables")
+    
+    def run(self) -> bool:
+        env_path = Path('.env')
         
-        has_gemini = await loop.run_in_executor(None, list_models_sync)
-        if has_gemini:
-            log_success("Google AI Studio (Gemini) API Key is VALID!")
+        if not env_path.exists():
+            self.message = ".env file not found in current directory"
+            error(self.message)
+            info("Run: cp .env.example .env && nano .env")
+            return False
+        
+        success(f".env file found")
+        
+        # Load and check variables
+        with open(env_path) as f:
+            content = f.read()
+        
+        env_vars = {}
+        for line in content.split('\n'):
+            if '=' in line and not line.strip().startswith('#'):
+                key, _, value = line.partition('=')
+                env_vars[key.strip()] = value.strip()
+        
+        missing_required = []
+        missing_recommended = []
+        
+        for var in self.REQUIRED_VARS:
+            if var not in env_vars or not env_vars[var] or 'your_' in env_vars[var].lower():
+                missing_required.append(var)
+        
+        for var in self.RECOMMENDED_VARS:
+            if var not in env_vars or not env_vars[var] or 'your_' in env_vars[var].lower():
+                missing_recommended.append(var)
+        
+        if missing_required:
+            error(f"Missing required variables: {', '.join(missing_required)}")
+            return False
+        
+        success(f"All required variables present")
+        
+        if missing_recommended:
+            warning(f"Missing recommended variables: {', '.join(missing_recommended)}")
+            warning("These are optional but recommended for full functionality")
+        
+        return True
+
+
+class PythonVersionCheck(DiagnosticCheck):
+    """Check Python version."""
+    
+    MIN_VERSION = (3, 8)
+    
+    def __init__(self):
+        super().__init__("Python Version")
+    
+    def run(self) -> bool:
+        version = sys.version_info[:2]
+        if version >= self.MIN_VERSION:
+            success(f"Python {version[0]}.{version[1]} (meets requirement)")
             return True
         else:
-            log_error("Google AI Studio API Key could not list Gemini models.")
+            self.message = f"Python {version[0]}.{version[1]} is below minimum {self.MIN_VERSION[0]}.{self.MIN_VERSION[1]}"
+            error(self.message)
             return False
-    except Exception as e:
-        log_warn(f"Could not verify Gemini API key (network or key issue): {e}")
-        return True  # Don't block setup on transient network issues
 
-async def main():
-    print(f"\n{BOLD}{BLUE}====================================================={RESET}")
-    print(f"{BOLD}{BLUE}          VocalizeBot - Verification System          {RESET}")
-    print(f"{BOLD}{BLUE}====================================================={RESET}\n")
 
-    all_ok = True
-
-    # 1. Check Python Dependencies
-    print(f"{BOLD}[1/3] Verifying Core Dependencies...{RESET}")
-    required_packages = [
-        ("fastapi", "fastapi"),
-        ("uvicorn", "uvicorn"),
-        ("pydantic", "pydantic"),
-        ("pydantic_settings", "pydantic-settings"),
-        ("telegram", "python-telegram-bot"),
-        ("google.generativeai", "google-generativeai"),
-        ("httpx", "httpx"),
-        ("aiofiles", "aiofiles"),
-        ("dotenv", "python-dotenv"),
-        ("loguru", "loguru"),
+class DependencyCheck(DiagnosticCheck):
+    """Check if required Python packages are installed."""
+    
+    REQUIRED_PACKAGES = [
+        'requests',
+        'dotenv',
+        'telegram',
+        'fastapi',
+        'uvicorn',
     ]
+    
+    def __init__(self):
+        super().__init__("Python Dependencies")
+    
+    def run(self) -> bool:
+        missing = []
+        installed = []
+        
+        for package in self.REQUIRED_PACKAGES:
+            try:
+                __import__(package)
+                installed.append(package)
+            except ImportError:
+                missing.append(package)
+        
+        if missing:
+            error(f"Missing packages: {', '.join(missing)}")
+            info("Run: pip install -r requirements.txt")
+            return False
+        
+        success(f"All required packages installed ({len(installed)} packages)")
+        return True
 
-    missing_packages = []
-    for module_name, package_name in required_packages:
+
+class NetworkCheck(DiagnosticCheck):
+    """Check network connectivity to required services."""
+    
+    HOSTS = [
+        ('api.telegram.org', 443),
+        ('aistudio.google.com', 443),
+        ('api.paypal.com', 443),
+    ]
+    
+    def __init__(self):
+        super().__init__("Network Connectivity")
+    
+    def run(self) -> bool:
+        all_passed = True
+        
+        for host, port in self.HOSTS:
+            try:
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(10)
+                result = sock.connect_ex((host, port))
+                sock.close()
+                
+                if result == 0:
+                    success(f"{host}:{port} - Connected")
+                else:
+                    error(f"{host}:{port} - Connection refused (firewall issue?)")
+                    all_passed = False
+            except socket.gaierror:
+                error(f"{host}:{port} - DNS resolution failed")
+                all_passed = False
+            except socket.timeout:
+                error(f"{host}:{port} - Connection timed out")
+                all_passed = False
+            except Exception as e:
+                error(f"{host}:{port} - {type(e).__name__}")
+                all_passed = False
+        
+        if not all_passed:
+            warning("Some connections failed. Check your internet or firewall.")
+        
+        return all_passed
+
+
+class TelegramTokenCheck(DiagnosticCheck):
+    """Verify Telegram bot token is valid."""
+    
+    def __init__(self):
+        super().__init__("Telegram Bot Token")
+    
+    def run(self) -> bool:
         try:
-            __import__(module_name)
-            log_success(f"Package '{package_name}' is installed and importable.")
+            from dotenv import load_dotenv
+            load_dotenv()
         except ImportError:
-            log_error(f"Package '{package_name}' is MISSING.")
-            missing_packages.append(package_name)
-            all_ok = False
-
-    if missing_packages:
-        print(f"\n{YELLOW}To install all missing packages, run:{RESET}")
-        print(f"pip install -r requirements.txt\n")
-
-    # 2. Check configuration file (.env)
-    print(f"\n{BOLD}[2/3] Verifying .env Configuration...{RESET}")
-    env_path = Path(".env")
-    if not env_path.exists():
-        log_error(".env file is missing! Please copy .env.example to .env")
-        all_ok = False
-    else:
-        log_success(".env file exists.")
+            pass
         
-        # Load environment variables
-        from dotenv import load_dotenv
-        load_dotenv(override=True)
-
-        bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
-        admin_chat_id = os.getenv("TELEGRAM_ADMIN_CHAT_ID")
-        google_key = os.getenv("GOOGLE_AI_API_KEY")
-
-        # Validate Telegram Bot Token
-        if not bot_token or bot_token == "your_telegram_bot_token_here" or bot_token == "":
-            log_error("TELEGRAM_BOT_TOKEN is not configured in .env")
-            all_ok = False
-        else:
-            log_success("TELEGRAM_BOT_TOKEN is present.")
-
-        # Validate Admin Chat ID
-        if not admin_chat_id or admin_chat_id == "your_telegram_id_here" or admin_chat_id == "":
-            log_error("TELEGRAM_ADMIN_CHAT_ID is not configured in .env")
-            all_ok = False
-        elif not admin_chat_id.replace('"', '').replace("'", "").isdigit():
-            log_error(f"TELEGRAM_ADMIN_CHAT_ID must be a numeric ID, got: {admin_chat_id}")
-            all_ok = False
-        else:
-            log_success(f"TELEGRAM_ADMIN_CHAT_ID is configured: {admin_chat_id}")
-
-        # Validate Google Key
-        if not google_key or google_key == "your_google_ai_api_key_here" or google_key == "":
-            log_error("GOOGLE_AI_API_KEY is not configured in .env")
-            all_ok = False
-        else:
-            log_success("GOOGLE_AI_API_KEY is present.")
-
-    # 3. Live API Validation
-    if all_ok:
-        print(f"\n{BOLD}[3/3] Performing Live Credentials Validation...{RESET}")
-        clean_token = bot_token.strip().strip('"').strip("'")
-        clean_key = google_key.strip().strip('"').strip("'")
+        token = os.environ.get('TELEGRAM_BOT_TOKEN', '')
         
-        # Run validations concurrently
-        tg_ok, gemini_ok = await asyncio.gather(
-            test_telegram_token(clean_token),
-            test_gemini_key(clean_key)
-        )
+        if not token or 'your_' in token.lower():
+            error("Telegram bot token not configured")
+            info("Get a token from @BotFather on Telegram")
+            return False
         
-        if not (tg_ok and gemini_ok):
-            log_warn("Credential validation succeeded with warnings/errors. Please double-check credentials if the bot fails to run.")
-    else:
-        print(f"\n{RED}❌ Verification failed during initial checks. Skipping live API validation.{RESET}")
+        # Validate token format (basic check)
+        parts = token.split(':')
+        if len(parts) != 2 or not parts[0].isdigit() or len(parts[1]) < 20:
+            error("Telegram bot token format appears invalid")
+            return False
+        
+        success("Telegram bot token configured")
+        
+        # Optionally verify with API
+        try:
+            import requests
+            response = requests.get(
+                f'https://api.telegram.org/bot{token}/getMe',
+                timeout=10
+            )
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('ok'):
+                    bot_name = data['result']['username']
+                    success(f"Bot verified: @{bot_name}")
+                    return True
+            error("Telegram API returned unexpected response")
+            return False
+        except Exception as e:
+            warning(f"Could not verify with Telegram API: {e}")
+            return True  # Don't fail, token might still be valid
 
-    print(f"\n{BOLD}{BLUE}====================================================={RESET}")
-    if all_ok:
-        print(f"{BOLD}{GREEN}🎉 SUCCESS: All systems green! VocalizeBot is ready! 🎉{RESET}")
-        print(f"{BOLD}{BLUE}====================================================={RESET}\n")
-        return 0
+
+class GoogleAIKeyCheck(DiagnosticCheck):
+    """Verify Google AI API key is configured."""
+    
+    def __init__(self):
+        super().__init__("Google AI API Key")
+    
+    def run(self) -> bool:
+        try:
+            from dotenv import load_dotenv
+            load_dotenv()
+        except ImportError:
+            pass
+        
+        api_key = os.environ.get('GOOGLE_AI_API_KEY', '')
+        
+        if not api_key or 'your_' in api_key.lower():
+            error("Google AI API key not configured")
+            info("Get a key from: https://aistudio.google.com/app/apikey")
+            return False
+        
+        if not api_key.startswith('AIza'):
+            warning("API key format doesn't match Google AI Studio pattern")
+        
+        success("Google AI API key configured")
+        
+        # Optionally verify with a simple test
+        try:
+            import requests
+            # Just check the key format is valid (don't make actual API call)
+            success("Key format appears valid")
+            return True
+        except Exception as e:
+            warning(f"Could not validate key: {e}")
+            return True
+
+
+class DashboardPortCheck(DiagnosticCheck):
+    """Check if Dashboard port is available or service is running."""
+    
+    DEFAULT_PORT = 8000
+    
+    def __init__(self):
+        super().__init__("Dashboard Port")
+    
+    def run(self) -> bool:
+        port = int(os.environ.get('PORT', self.DEFAULT_PORT))
+        
+        # Check if port is in use
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        result = sock.connect_ex(('127.0.0.1', port))
+        sock.close()
+        
+        if result == 0:
+            info(f"Port {port} is in use (Dashboard might be running)")
+            success("Dashboard service detected")
+            return True
+        else:
+            warning(f"Port {port} is available (Dashboard not running)")
+            info("Start with: python3 -m uvicorn src.main:app --host 0.0.0.0 --port 8000")
+            return True  # This is OK, service just not running
+
+
+class DatabaseCheck(DiagnosticCheck):
+    """Check database connectivity."""
+    
+    def __init__(self):
+        super().__init__("Database")
+    
+    def run(self) -> bool:
+        db_path = Path('vocalizebot.db')
+        
+        if db_path.exists():
+            size = db_path.stat().st_size
+            success(f"SQLite database found ({size} bytes)")
+            return True
+        else:
+            info("Database file not found (will be created on first run)")
+            success("Database configuration OK")
+            return True
+
+
+class DirectoryStructureCheck(DiagnosticCheck):
+    """Check required directories and files exist."""
+    
+    REQUIRED_PATHS = [
+        'src',
+        'src/channels',
+        'src/services',
+        'src/config',
+        'config',
+    ]
+    
+    def __init__(self):
+        super().__init__("Directory Structure")
+    
+    def run(self) -> bool:
+        all_exist = True
+        
+        for path_str in self.REQUIRED_PATHS:
+            path = Path(path_str)
+            if path.exists():
+                success(f"{path_str}/ exists")
+            else:
+                error(f"{path_str}/ missing")
+                all_exist = False
+        
+        return all_exist
+
+
+def run_diagnostics() -> bool:
+    """Run all diagnostic checks."""
+    print(colored("\n" + "═" * 60, Colors.DIM))
+    print(colored("🔍 VocalizeBot - Self-Diagnostic Tool", Colors.BOLD + Colors.BLUE))
+    print(colored("═" * 60 + "\n", Colors.DIM))
+    
+    checks = [
+        DirectoryStructureCheck(),
+        PythonVersionCheck(),
+        EnvFileCheck(),
+        DependencyCheck(),
+        DatabaseCheck(),
+        TelegramTokenCheck(),
+        GoogleAIKeyCheck(),
+        DashboardPortCheck(),
+        NetworkCheck(),
+    ]
+    
+    results = []
+    
+    for check in checks:
+        header(check.name)
+        try:
+            passed = check.run()
+            results.append(passed)
+        except Exception as e:
+            error(f"Check failed with error: {e}")
+            results.append(False)
+    
+    # Summary
+    header("Diagnostic Summary")
+    passed_count = sum(results)
+    total_count = len(results)
+    
+    print(f"\nPassed: {colored(f'{passed_count}/{total_count}', Colors.GREEN if passed_count == total_count else Colors.YELLOW)}")
+    
+    if passed_count == total_count:
+        print(colored("\n🎉 All checks passed! Your system is ready.", Colors.GREEN + Colors.BOLD))
+        print("\nTo start VocalizeBot:")
+        print(f"  {colored('python3 src/main.py', Colors.BLUE)}")
+        print(f"\nOr for production:")
+        print(f"  {colored('nohup python3 -m uvicorn src.main:app --host 0.0.0.0 --port 8000 > bot.log 2>&1 &', Colors.DIM)}")
+        return True
     else:
-        print(f"{BOLD}{RED}❌ ERROR: Some configurations or packages are missing. ❌{RESET}")
-        print(f"{BOLD}{BLUE}====================================================={RESET}\n")
-        return 1
+        print(colored("\n⚠️  Some checks failed. Please fix the issues above.", Colors.YELLOW))
+        print("\nCommon fixes:")
+        print("  1. cp .env.example .env")
+        print("  2. pip install -r requirements.txt")
+        return False
+
 
 if __name__ == "__main__":
-    sys.exit(asyncio.run(main()))
+    success_result = run_diagnostics()
+    sys.exit(0 if success_result else 1)

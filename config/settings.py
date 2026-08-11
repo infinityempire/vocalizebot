@@ -45,7 +45,7 @@ class Settings(BaseSettings):
     telegram_bot_token: Optional[str] = None
     telegram_webhook_secret: Optional[str] = None
     telegram_allow_groups: bool = False
-    telegram_admin_chat_id: Optional[str] = None  # Chat ID to forward all incoming messages for monitoring
+    telegram_admin_chat_id: Optional[str] = None  # Admin's Telegram ID for hot lead notifications & message monitoring
 
     # Database
     database_url: str = "sqlite+aiosqlite:///./vocalizebot.db"

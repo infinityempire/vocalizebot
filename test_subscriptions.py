@@ -31,7 +31,9 @@ class TestSubscriptionManager(unittest.TestCase):
         # Test exceeding voice length when daily count is not yet reached
         allowed, message = self.manager.can_transcribe("user2", 31)
         self.assertFalse(allowed)
-        self.assertEqual(message, "Voice note exceeds maximum allowed length.")
+        # Paywall message is returned (Hebrew voice-too-long notice with upgrade link)
+        self.assertIn("ארוכה מדי", message)
+        self.assertIn("paypal.me", message)
 
         # Test within daily limits
         for _ in range(3):
@@ -42,7 +44,9 @@ class TestSubscriptionManager(unittest.TestCase):
         # Test exceeding daily limit
         allowed, message = self.manager.can_transcribe("user2", 30)
         self.assertFalse(allowed)
-        self.assertEqual(message, "Daily transcription limit reached.")
+        # Upgrade paywall message is returned
+        self.assertIn("הגעת למכסה", message)
+        self.assertIn("paypal.me", message)
 
 
     def test_upgrade_to_premium(self):
@@ -61,7 +65,9 @@ class TestSubscriptionManager(unittest.TestCase):
         # Test exceeding premium voice length
         allowed, message = self.manager.can_transcribe("user3", 301)
         self.assertFalse(allowed)
-        self.assertEqual(message, "Voice note exceeds maximum allowed length.")
+        # Paywall message is returned (Hebrew voice-too-long notice with upgrade link)
+        self.assertIn("ארוכה מדי", message)
+        self.assertIn("paypal.me", message)
 
 if __name__ == "__main__":
     unittest.main()
