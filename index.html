@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Missed-Call Text-Back Bot | Stop Losing Jobs to Missed Calls</title>
+<meta name="description" content="Every missed call while you're on a job is a customer calling your competitor. Auto text-back in 3 seconds. Pilot pricing for solo operators.">
+<style>
+  :root{
+    --bg:#0b0f14; --bg2:#11171f; --card:#161e28; --card2:#1c2632;
+    --txt:#e6edf3; --mut:#8b98a5; --acc:#22c55e; --acc2:#16a34a;
+    --danger:#ef4444; --line:#243041;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--txt);line-height:1.6}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:880px;margin:0 auto;padding:0 20px}
+  section{padding:64px 0;border-bottom:1px solid var(--line)}
+  h1{font-size:clamp(30px,6vw,52px);line-height:1.1;font-weight:800;letter-spacing:-.02em}
+  h2{font-size:clamp(24px,4vw,34px);font-weight:700;letter-spacing:-.01em;margin-bottom:14px}
+  h3{font-size:20px;font-weight:600;margin-bottom:8px}
+  p{color:var(--mut)}
+  .lead{font-size:19px;color:var(--mut);margin-top:18px}
+  strong{color:var(--txt)}
+  .hook{color:var(--acc)}
+  .center{text-align:center}
+
+  /* hero */
+  .hero{padding:80px 0 56px;text-align:center;background:radial-gradient(60% 60% at 50% 0%,rgba(34,197,94,.12),transparent 70%)}
+  .pill{display:inline-block;padding:6px 14px;border:1px solid var(--line);border-radius:999px;font-size:13px;color:var(--mut);margin-bottom:20px}
+  .hero .cta{margin-top:30px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:15px 24px;border-radius:12px;font-weight:600;font-size:16px;border:1px solid transparent;cursor:pointer;transition:transform .08s,background .2s}
+  .btn:active{transform:translateY(1px)}
+  .btn-primary{background:var(--acc);color:#06140a}
+  .btn-primary:hover{background:var(--acc2)}
+  .btn-ghost{background:transparent;border-color:var(--line);color:var(--txt)}
+  .btn-ghost:hover{background:var(--card2)}
+
+  /* stat band */
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:40px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;text-align:center}
+  .stat .n{font-size:28px;font-weight:800;color:var(--acc)}
+  .stat .l{font-size:13px;color:var(--mut);margin-top:4px}
+
+  /* problem */
+  .problem ul{list-style:none;margin-top:18px;display:grid;gap:14px}
+  .problem li{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;display:flex;gap:14px;align-items:flex-start}
+  .problem .x{color:var(--danger);font-weight:800;font-size:20px;line-height:1.4}
+
+  /* solution */
+  .steps{display:grid;gap:16px;margin-top:22px}
+  .step{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px}
+  .step .num{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;background:var(--acc);color:#06140a;font-weight:800;margin-bottom:12px}
+  .step .demo{margin-top:14px;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:14px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;color:var(--mut)}
+  .step .demo .you{color:var(--acc)}
+
+  /* ROI calculator */
+  #roi .calc{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:26px;margin-top:18px}
+  .calc .row{margin-bottom:20px}
+  .calc label{display:flex;justify-content:space-between;font-size:14px;color:var(--mut);margin-bottom:8px}
+  .calc label .val{color:var(--txt);font-weight:600}
+  .calc input[type=range]{width:100%;accent-color:var(--acc);height:6px;cursor:pointer}
+  .calc .out{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-top:22px}
+  .calc .out .o{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:16px;text-align:center}
+  .calc .out .o .big{font-size:24px;font-weight:800}
+  .calc .out .o .s{font-size:12px;color:var(--mut);margin-top:4px}
+  .calc .out .o.lost .big{color:var(--danger)}
+  .calc .out .o.save .big{color:var(--acc)}
+  .calc .note{margin-top:16px;font-size:13px;color:var(--mut);text-align:center}
+
+  /* pricing */
+  .pricing .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:22px}
+  .plan{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px}
+  .plan.feat{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc) inset}
+  .plan .t{font-size:14px;color:var(--mut)}
+  .plan .p{font-size:30px;font-weight:800;margin:6px 0}
+  .plan ul{list-style:none;margin:14px 0 18px;display:grid;gap:8px;font-size:14px;color:var(--mut)}
+  .plan li::before{content:"✓ ";color:var(--acc)}
+  .plan .btn{width:100%;justify-content:center}
+
+  /* faq */
+  .faq details{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin-bottom:10px}
+  .faq summary{cursor:pointer;font-weight:600}
+  .faq p{margin-top:10px;font-size:15px}
+
+  /* final cta */
+  .final{text-align:center}
+  .final .cta{margin-top:22px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+  footer{padding:30px 0;text-align:center;color:var(--mut);font-size:13px}
+
+  @media(max-width:680px){
+    .stats,.calc .out,.pricing .grid{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="pill">For solo trades &amp; field-service operators</span>
+    <h1>Stop losing jobs to <span class="hook">missed calls</span> while you're on a job.</h1>
+    <p class="lead">Every unanswered ring is a customer calling your competitor. When you can't pick up, your business number auto-replies by text in 3 seconds &mdash; so the lead stays yours.</p>
+    <div class="cta">
+      <a href="#roi" class="btn btn-primary">See what it's costing you &darr;</a>
+      <a href="https://wa.me/972552543996?text=Hi%20I%20saw%20the%20missed-call%20text-back%20bot%20-%20tell%20me%20about%20the%20pilot" class="btn btn-ghost" target="_blank" rel="noopener">Ask about the pilot &rarr;</a>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="n">3 sec</div><div class="l">to first auto-reply text</div></div>
+      <div class="stat"><div class="n">21&times;</div><div class="l">higher qualification vs &gt;30 min reply*</div></div>
+      <div class="stat"><div class="n">0</div><div class="l">new staff or software to learn</div></div>
+    </div>
+    <p style="font-size:12px;color:var(--mut);margin-top:14px">*Speed-to-lead benchmark commonly cited across industry research.</p>
+  </div>
+</header>
+
+<section class="problem">
+  <div class="wrap">
+    <h2>The leak you can't see</h2>
+    <p>You're under a sink, on a ladder, or driving between jobs. The phone rings. By the time you call back an hour later, that customer already booked the next guy on Google.</p>
+    <ul>
+      <li><span class="x">&times;</span><div><strong>Most of your revenue calls come while you're hands-on.</strong> You can't answer and you can't hire a receptionist for the volume.</div></li>
+      <li><span class="x">&times;</span><div><strong>Voicemail is a dead end.</strong> Callers don't leave messages anymore &mdash; they just redial the next result on the list.</div></li>
+      <li><span class="x">&times;</span><div><strong>You pay for the lead, then lose it at the finish line.</strong> Ad spend + missed call = paying to send customers to your competitor.</div></li>
+    </ul>
+  </div>
+</section>
+
+<section class="solution">
+  <div class="wrap">
+    <h2>How the text-back bot works</h2>
+    <div class="steps">
+      <div class="step">
+        <span class="num">1</span>
+        <h3>A call comes in and you can't pick up</h3>
+        <p>The call rings out unanswered (or goes to voicemail). No app to open, nothing to press.</p>
+        <div class="demo">📞 incoming call &mdash; no answer</div>
+      </div>
+      <div class="step">
+        <span class="num">2</span>
+        <h3>Your business number auto-texts back in ~3 seconds</h3>
+        <p>A short, personalized SMS is sent to the caller so they know you saw them and will get back to them &mdash; before they call anyone else.</p>
+        <div class="demo"><span class="you">SMS &rarr; caller:</span> "Hi, this is Tal &mdash; I'm on a job right now and missed your call. What do you need? I'll get back to you within the hour."</div>
+      </div>
+      <div class="step">
+        <span class="num">3</span>
+        <h3>The lead stays yours &mdash; and gets logged</h3>
+        <p>Every missed-call + reply is logged in a simple sheet you can check at the end of the day. No leads slipping through.</p>
+        <div class="demo">📝 logged &rarr; timestamp, caller, reply sent, follow-up status</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="roi">
+  <div class="wrap center">
+    <h2>What are missed calls costing you?</h2>
+    <p>Drag the sliders to match your business. This is a rough estimate, not a sales trick.</p>
+    <div class="calc">
+      <div class="row">
+        <label>Incoming calls per day <span class="val" id="v_calls">12</span></label>
+        <input type="range" id="calls" min="2" max="60" value="12">
+      </div>
+      <div class="row">
+        <label>% you miss while on a job <span class="val" id="v_missed">40%</span></label>
+        <input type="range" id="missed" min="5" max="90" value="40">
+      </div>
+      <div class="row">
+        <label>% of those you'd close <span class="val" id="v_close">30%</span></label>
+        <input type="range" id="close" min="5" max="80" value="30">
+      </div>
+      <div class="row">
+        <label>Average job value ($) <span class="val" id="v_job">$250</span></label>
+        <input type="range" id="job" min="50" max="2000" value="250" step="10">
+      </div>
+      <div class="out">
+        <div class="o lost">
+          <div class="big" id="o_lost">$0</div>
+          <div class="s">lost / month (est.)</div>
+        </div>
+        <div class="o save">
+          <div class="big" id="o_save">$0</div>
+          <div class="s">recoverable / month</div>
+        </div>
+        <div class="o">
+          <div class="big" id="o_roi">0&times;</div>
+          <div class="s">return on the $97 pilot</div>
+        </div>
+      </div>
+      <p class="note">Assumes ~22 working days/month. Recoverable assumes the bot recovers a portion of missed leads that would otherwise be lost.</p>
+    </div>
+  </div>
+</section>
+
+<section class="pricing">
+  <div class="wrap center">
+    <h2>Simple, honest pricing</h2>
+    <p>No contracts. Cancel anytime. Pilot spots are limited because each one is set up by hand.</p>
+    <div class="grid">
+      <div class="plan">
+        <div class="t">Pilot (first month)</div>
+        <div class="p">$97</div>
+        <ul>
+          <li>Missed-call text-back on your number</li>
+          <li>Lead logging sheet</li>
+          <li>Set up by hand, usually same day</li>
+        </ul>
+        <a href="https://wa.me/972552543996?text=Hi%20I%20want%20a%20pilot%20spot%20for%20the%20missed-call%20text-back%20bot" class="btn btn-primary" target="_blank" rel="noopener">Claim a pilot spot</a>
+      </div>
+      <div class="plan feat">
+        <div class="t">Monthly (after pilot)</div>
+        <div class="p">$49/mo</div>
+        <ul>
+          <li>Everything in pilot</li>
+          <li>Custom reply text</li>
+          <li>Weekly leads-saved report</li>
+        </ul>
+        <a href="https://wa.me/972552543996?text=Hi%20I%20have%20a%20question%20about%20the%20monthly%20plan" class="btn btn-ghost" target="_blank" rel="noopener">Ask a question</a>
+      </div>
+      <div class="plan">
+        <div class="t">Not sure yet?</div>
+        <div class="p">Free</div>
+        <ul>
+          <li>30-min call to see if it fits</li>
+          <li>No pressure, no card needed</li>
+          <li>I'll show you the live demo</li>
+        </ul>
+        <a href="mailto:tal.derie.td@gmail.com?subject=Missed-call%20bot%20question" class="btn btn-ghost">Email Tal</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="faq">
+  <div class="wrap">
+    <h2 class="center">Questions you probably have</h2>
+    <details><summary>Do I need to change my phone number?</summary><p>No. The text-back runs on a forwarding number that points to your existing line, or we use your current business number &mdash; your choice. We go over this on the setup call.</p></details>
+    <details><summary>Will it look like spam to my customers?</summary><p>No. The reply is short, signed by you, and only fires when a real call is missed &mdash; not on every contact. It reads like a human, because it's written like one.</p></details>
+    <details><summary>What if I answer the phone?</summary><p>Then nothing happens. The bot only kicks in when a call goes unanswered. If you pick up, it stays out of the way.</p></details>
+    <details><summary>How fast can I be live?</summary><p>If there's a pilot spot open, usually the same day you say yes. Setup takes about 10&ndash;15 minutes on a quick call.</p></details>
+    <details><summary>Is this a real person or a bot?</summary><p>Both. The bot handles the instant text-back so no lead goes cold. I (Tal) personally handle setup, questions, and anything that needs a human. You can always reach me directly.</p></details>
+  </div>
+</section>
+
+<section class="final">
+  <div class="wrap">
+    <h2>Every missed call today is a job your competitor gets.</h2>
+    <p>Let's stop that leak. Pilot is $97, set up by hand, no contract.</p>
+    <div class="cta">
+      <a href="https://wa.me/972552543996?text=I%20want%20a%20pilot%20spot%20for%20the%20missed-call%20text-back%20bot" class="btn btn-primary" target="_blank" rel="noopener">Claim a pilot spot on WhatsApp</a>
+      <a href="mailto:tal.derie.td@gmail.com?subject=Pilot%20spot%20-%20missed-call%20bot" class="btn btn-ghost">✉ Email Tal</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    Missed-Call Text-Back &middot; run by Tal &middot; <a href="https://wa.me/972552543996" target="_blank" rel="noopener">WhatsApp</a> &middot; <a href="mailto:tal.derie.td@gmail.com">Email</a>
+  </div>
+</footer>
+
+<script>
+  const calls=document.getElementById('calls'),
+        missed=document.getElementById('missed'),
+        close=document.getElementById('close'),
+        job=document.getElementById('job');
+  const v_calls=document.getElementById('v_calls'),
+        v_missed=document.getElementById('v_missed'),
+        v_close=document.getElementById('v_close'),
+        v_job=document.getElementById('v_job');
+  const o_lost=document.getElementById('o_lost'),
+        o_save=document.getElementById('o_save'),
+        o_roi=document.getElementById('o_roi');
+  const PILOT=97, DAYS=22, RECOVER=0.6; // rough share of missed leads the bot wins back
+
+  function money(n){return '$'+Math.round(n).toLocaleString('en-US');}
+
+  function recalc(){
+    const c=+calls.value, m=+missed.value, cl=+close.value, j=+job.value;
+    v_calls.textContent=c;
+    v_missed.textContent=m+'%';
+    v_close.textContent=cl+'%';
+    v_job.textContent='$'+j;
+    const missedPerDay=c*m/100;
+    const missedPerMonth=missedPerDay*DAYS;
+    const lost=missedPerMonth*cl/100*j;
+    const save=lost*RECOVER;
+    o_lost.textContent=money(lost);
+    o_save.textContent=money(save);
+    o_roi.textContent=(save>0&&PILOT>0)?(save/PILOT).toFixed(1)+'×':'0×';
+  }
+  [calls,missed,close,job].forEach(el=>el.addEventListener('input',recalc));
+  recalc();
+</script>
+</body>
+</html>
