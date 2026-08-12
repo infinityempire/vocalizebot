@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>דימו חי | בוט החזרת שיחות שלא נענו</title>
+<title>דמו חי | בוט החזרת שיחות שלא נענו</title>
 <style>
   :root{
     --bg:#0b0f14; --bg2:#11171f; --card:#161e28; --txt:#e6edf3; --mut:#8b98a5;
@@ -122,7 +122,7 @@
   </div>
 
   <div class="controls">
-    <button class="btn btn-primary" id="playBtn">▶ נגן דימו</button>
+    <button class="btn btn-primary" id="playBtn">▶ נגן דמו</button>
     <button class="btn btn-ghost replay" id="resetBtn">↺ נגן שוב</button>
   </div>
 </div>
@@ -169,7 +169,7 @@ function reset(){
   ringStatus.textContent='מצלצל…';
   hangupBtn.style.display='';
   setStep(-1);barFill.style.width='0';
-  playBtn.textContent='▶ נגן דימו';playBtn.disabled=false;
+  playBtn.textContent='▶ נגן דמו';playBtn.disabled=false;
   resetBtn.classList.remove('ready');
 }
 
@@ -223,7 +223,7 @@ function goToMissed(){
   t(()=>{
     // step 4: lead captured
     setStep(3);
-    addBubble('מגיע בעוד 40 דקות. אל תדאגו, סודר.', 'out');
+    addBubble('מגיע בעוד 40 דקות. אל תדאגו זה יסודר!', 'out');
     resetBtn.classList.add('ready');
     playBtn.textContent='✓ הסתיים';playBtn.disabled=true;
   },8500);
