@@ -100,7 +100,7 @@
         <div class="lock-date">שלישי, היום</div>
         <div class="lock-notif" id="smsNotif" style="display:none">
           <div class="app">הודעות · עכשיו</div>
-          <div class="msg">היי, ראיתי שחיפשת אותי ולא הספקתי לענות. במה אוכל לעזור?</div>
+          <div class="msg">היי! ראינו שניסית להשיג את אינסטלציה יוסף ולא היתה תשובה. במה אפשר לעזור?</div>
         </div>
       </div>
       <!-- messaging -->
@@ -209,24 +209,23 @@ function goToMissed(){
   t(()=>{
     lockScreen.classList.remove('show');
     msgScreen.classList.add('show');
-    addBubble('היי, ראיתי שחיפשת אותי. אתם עושים אינסטלציה עם דחיפות?', 'in');
+    // Bot Message 1 - initial outreach
+    addBubble('היי! ראינו שניסית להשיג את אינסטלציה יוסף ולא היתה תשובה. במה אפשר לעזור?', 'out');
   },4500);
 
   t(()=>{
-    addBubble('היי! כן, במה מדובר?', 'out');
+    // Customer Reply 1
+    addBubble('כיור במטבח סתום, המים עולים 😫', 'in');
   },5800);
-
-  t(()=>{
-    addBubble('כיור במטבח סתום, המים עולים 😩', 'in');
-  },7000);
 
   t(()=>{
     // step 4: lead captured
     setStep(3);
-    addBubble('מגיע בעוד 40 דקות. אל תדאגו זה יסודר!', 'out');
+    // Bot Reply 2 - urgent dispatch
+    addBubble('קיבלתי! מעביר מיד קריאה דחופה לבעל המקצוע. אל דאגה, זה יסודר!', 'out');
     resetBtn.classList.add('ready');
     playBtn.textContent='✓ הסתיים';playBtn.disabled=true;
-  },8500);
+  },7000);
 }
 
 playBtn.onclick=run;
