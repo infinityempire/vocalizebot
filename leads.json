@@ -118,5 +118,65 @@
     "phone": "+972506534355",
     "city": "Petah Tikva",
     "category": "garage"
+  },
+  {
+    "name": "Leon Plumber",
+    "phone": "+972504477266",
+    "city": "Tel Aviv",
+    "category": "plumber"
+  },
+  {
+    "name": "אינסטלטוב - ישי פוקס",
+    "phone": "+972546273000",
+    "city": "Jerusalem",
+    "category": "plumber"
+  },
+  {
+    "name": "Moti Asa Electric",
+    "phone": "+972504443998",
+    "city": "Rishon LeZion",
+    "category": "electrician"
+  },
+  {
+    "name": "שי מנעולן",
+    "phone": "+972542010027",
+    "city": "Tel Aviv",
+    "category": "locksmith"
+  },
+  {
+    "name": "אורן המנעולן 007",
+    "phone": "+972586300707",
+    "city": "Jerusalem",
+    "category": "locksmith"
+  },
+  {
+    "name": "מוסך נחלת יצחק",
+    "phone": "+972505930556",
+    "city": "Tel Aviv",
+    "category": "garage"
+  },
+  {
+    "name": "מוסך אדוארד ברהום בע\"מ",
+    "phone": "+972522610190",
+    "city": "Haifa",
+    "category": "garage"
+  },
+  {
+    "name": "Atun Plumbing",
+    "phone": "+972544877927",
+    "city": "Petah Tikva",
+    "category": "plumber"
+  },
+  {
+    "name": "מרדכי המנעולן",
+    "phone": "+972554329666",
+    "city": "Petah Tikva",
+    "category": "locksmith"
+  },
+  {
+    "name": "אור לחשמל",
+    "phone": "+972528841804",
+    "city": "Jerusalem",
+    "category": "electrician"
   }
 ]
