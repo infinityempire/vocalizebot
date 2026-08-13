@@ -90,63 +90,9 @@
     "category": "garage"
   },
   {
-    "name": "Oren Rada Plumbing",
-    "phone": "+972723926556",
-    "city": "Tel Aviv",
-    "category": "plumber"
-  },
-  {
-    "name": "Yossi Akri Plumbing & Sewage",
-    "phone": "+972536118773",
-    "city": "Tel Aviv",
-    "category": "plumber"
-  },
-  {
-    "name": "Michael Plumbing Services",
-    "phone": "+972532472503",
-    "city": "Tel Aviv",
-    "category": "plumber"
-  },
-  {
-    "name": "Oren Or Plumbing",
-    "phone": "+972554521324",
-    "city": "Tel Aviv",
-    "category": "plumber"
-  },
-  {
-    "name": "Shimi Ran Plumbing Services",
-    "phone": "+972554599207",
-    "city": "Tel Aviv",
-    "category": "plumber"
-  },
-  {
     "name": "Eli Electric Services",
     "phone": "+972546980262",
     "city": "Haifa",
-    "category": "electrician"
-  },
-  {
-    "name": "Electro Boaz Electrical Services",
-    "phone": "+972723224061",
-    "city": "Haifa",
-    "category": "electrician"
-  },
-  {
-    "name": "David Electrical Works",
-    "phone": "+972536118549",
-    "city": "Tel Aviv",
-    "category": "electrician"
-  },
-  {
-    "name": "Salama Electrician",
-    "phone": "+972534701949",
-    "city": "Tel Aviv",
-    "category": "electrician"
-  },
-  {
-    "name": "Schmidt Electrical Systems",
-    "phone": "+972538044293",
-    "city": "Tel Aviv",
     "category": "electrician"
   },
   {
@@ -168,45 +114,9 @@
     "category": "locksmith"
   },
   {
-    "name": "A. Fichtenbaum Locksmith",
-    "phone": "+972737841540",
-    "city": "Haifa",
-    "category": "locksmith"
-  },
-  {
-    "name": "Oren the Locksmith",
-    "phone": "+972538043098",
-    "city": "Tel Aviv",
-    "category": "locksmith"
-  },
-  {
-    "name": "David Center Garage",
-    "phone": "+97235370560",
-    "city": "Tel Aviv",
-    "category": "garage"
-  },
-  {
-    "name": "Yamit Garage",
-    "phone": "+97235616178",
-    "city": "Tel Aviv",
-    "category": "garage"
-  },
-  {
-    "name": "Hadar Garage",
-    "phone": "+972554543759",
-    "city": "Rishon LeZion",
-    "category": "garage"
-  },
-  {
     "name": "Victor Garage",
     "phone": "+972506534355",
     "city": "Petah Tikva",
-    "category": "garage"
-  },
-  {
-    "name": "Hyundai Service Center Tel Aviv",
-    "phone": "+97236819561",
-    "city": "Tel Aviv",
     "category": "garage"
   }
 ]
